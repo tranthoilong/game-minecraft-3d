@@ -134,6 +134,18 @@
       cursor: grab;
       user-select: none;
     }
+    #inventory .inv-item-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.35);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+      margin-bottom: 2px;
+    }
+    #inventory .inv-item-label {
+      font-size: 10px;
+      opacity: 0.9;
+    }
     #inventory .inv-item.empty {
       opacity: 0.35;
       cursor: default;
@@ -165,6 +177,11 @@
       justify-content: center;
       cursor: grab;
       user-select: none;
+    }
+    #inventory .craft-item .inv-item-icon {
+      width: 18px;
+      height: 18px;
+      margin-bottom: 0;
     }
     #inventory button {
       margin-top: 8px;
@@ -942,6 +959,26 @@ function triggerHitOverlay(){
   }
 }
 
+// Thông tin hiển thị/“icon” cho từng loại item trong túi và bàn chế tạo
+function getItemVisual(key){
+  switch(key){
+    case 'log':
+      return { label: 'Log', color: '#8b4513' };          // nâu đậm
+    case 'plank':
+      return { label: 'Plank', color: '#deb887' };        // nâu vàng
+    case 'stick':
+      return { label: 'Stick', color: '#d2b48c' };        // be nhạt
+    case 'crafting_table':
+      return { label: 'Bàn', color: '#b07040' };          // nâu đỏ
+    case 'rotten_flesh':
+      return { label: 'Flesh', color: '#b84848' };        // đỏ sẫm
+    case 'wood_sword':
+      return { label: 'Kiếm', color: '#c0c0c0' };         // xám nhạt
+    default:
+      return { label: key, color: '#888' };
+  }
+}
+
 function renderInventory(){
   ui.inventory.innerHTML = `
     <h3>Túi đồ & Bàn chế tạo 3×3</h3>
@@ -984,12 +1021,12 @@ function renderInventory(){
   if(invEl){
     invEl.innerHTML = '';
     const items = [
-      { key: 'log',            label: 'Log' },
-      { key: 'plank',          label: 'Plank' },
-      { key: 'stick',          label: 'Stick' },
-      { key: 'crafting_table', label: 'Bàn chế tạo' },
-      { key: 'rotten_flesh',   label: 'Thịt thối' },
-      { key: 'wood_sword',     label: 'Kiếm gỗ' },
+      { key: 'log' },
+      { key: 'plank' },
+      { key: 'stick' },
+      { key: 'crafting_table' },
+      { key: 'rotten_flesh' },
+      { key: 'wood_sword' },
     ];
     for(const info of items){
       const count = inventory[info.key] ?? 0;
@@ -998,7 +1035,11 @@ function renderInventory(){
 
       const itemEl = document.createElement('div');
       itemEl.className = 'inv-item' + (count === 0 ? ' empty' : '');
-      itemEl.textContent = info.label;
+      const v = getItemVisual(info.key);
+      itemEl.innerHTML = `
+        <div class="inv-item-icon" style="background:${v.color};"></div>
+        <div class="inv-item-label">${v.label}</div>
+      `;
 
       const countEl = document.createElement('div');
       countEl.className = 'inv-count';
@@ -1100,17 +1141,11 @@ function renderInventory(){
       if(v){
         const itemEl = document.createElement('div');
         itemEl.className = 'craft-item';
-        // nhãn ngắn theo loại item
-        let label = '?';
-        let title = v;
-        if(v === 'log'){ label = 'L'; title = 'Log (thân cây)'; }
-        else if(v === 'plank'){ label = 'P'; title = 'Plank (ván gỗ)'; }
-        else if(v === 'stick'){ label = 'S'; title = 'Stick (que gỗ)'; }
-        else if(v === 'crafting_table'){ label = 'T'; title = 'Bàn chế tạo'; }
-        else if(v === 'rotten_flesh'){ label = 'F'; title = 'Thịt thối'; }
-        else if(v === 'wood_sword'){ label = 'K'; title = 'Kiếm gỗ'; }
-        itemEl.textContent = label;
-        itemEl.title = title;
+        const vis = getItemVisual(v);
+        itemEl.innerHTML = `
+          <div class="inv-item-icon" style="background:${vis.color};"></div>
+        `;
+        itemEl.title = vis.label;
         itemEl.draggable = true;
         itemEl.addEventListener('dragstart', (ev) => {
           if(!ev.dataTransfer) return;
@@ -1251,7 +1286,17 @@ function renderInventory(){
     const recipe = detectRecipe();
     const ok = !!recipe;
     btn.disabled = !ok;
-    resultEl.textContent = ok ? recipe.label : '';
+    if(ok && recipe){
+      const vis = getItemVisual(recipe.item);
+      resultEl.innerHTML = `
+        <span style="display:inline-flex;align-items:center;gap:4px;">
+          <span class="inv-item-icon" style="width:16px;height:16px;margin-bottom:0;background:${vis.color};border-radius:3px;border:1px solid rgba(255,255,255,0.35);"></span>
+          <span>${recipe.label}</span>
+        </span>
+      `;
+    } else {
+      resultEl.textContent = '';
+    }
     btn.onclick = () => {
       const r = detectRecipe();
       if(!r) return;
