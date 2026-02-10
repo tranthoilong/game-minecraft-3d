@@ -1515,6 +1515,101 @@ function tryPlaceTree(x, y, z, keyList){
   }
 }
 
+// Đảm bảo người chơi luôn thấy cây quanh điểm spawn (chạy 1 lần)
+let ensuredSpawnTrees = false;
+function ensureTreesNearSpawn(){
+  if(ensuredSpawnTrees) return;
+  ensuredSpawnTrees = true;
+
+  const baseX = 0;
+  const baseZ = 0;
+  const MIN_DIST = 7;           // khoảng cách tối thiểu giữa các cây
+  const SPAWN_CLEAR_R = 10;     // không đặt cây quá sát điểm spawn để tránh bị "kẹt trong lá"
+  const placed = [];
+
+  function findSolidSpotNear(x0, z0, maxR){
+    for(let r=0; r<=maxR; r++){
+      for(let i=-r; i<=r; i++){
+        const pts = [
+          [x0 + r, z0 + i],
+          [x0 - r, z0 + i],
+          [x0 + i, z0 + r],
+          [x0 + i, z0 - r],
+        ];
+        for(const [x, z] of pts){
+          const h = heightAt(x, z);
+          const ground = getBlock(x, h, z);
+          // ưu tiên: chỉ cần có nền chắc (không phải nước) để chắc chắn thấy cây
+          if(!ground || ground === BlockType.WATER) continue;
+          const above = getBlock(x, h + 1, z);
+          // nếu phía trên là nước (hồ/biển) thì vẫn cho phép đặt: ta sẽ dọn nước trước khi dựng cây
+          if(above && above !== BlockType.WATER) continue;
+          return { x, z, h, needsClearWater: (above === BlockType.WATER) };
+        }
+      }
+    }
+    return null;
+  }
+
+  // ưu tiên đặt 1 cây ngay phía trước (hướng -Z mặc định) và thêm vài cây quanh spawn
+  const targets = [
+    { ox: 0,  oz: -10, r: 10 }, // phía trước camera mặc định
+    { ox: 0,  oz: 0,   r: 18 },
+    { ox: 12, oz: 0,   r: 14 },
+    { ox: -12,oz: 0,   r: 14 },
+    { ox: 0,  oz: 12,  r: 14 },
+    { ox: 0,  oz: -12, r: 14 },
+  ];
+
+  for(const t of targets){
+    const spot = findSolidSpotNear(baseX + t.ox, baseZ + t.oz, t.r);
+    if(!spot) continue;
+    if(Math.hypot(spot.x - baseX, spot.z - baseZ) < SPAWN_CLEAR_R) continue;
+    let ok = true;
+    for(const p of placed){
+      if(Math.hypot(p.x - spot.x, p.z - spot.z) < MIN_DIST){ ok = false; break; }
+    }
+    if(!ok) continue;
+    if(spot.needsClearWater){
+      for(let yy=spot.h+1; yy<=spot.h+10; yy++){
+        if(getBlock(spot.x, yy, spot.z) === BlockType.WATER){
+          removeBlockAt(spot.x, yy, spot.z);
+        }
+      }
+    }
+    tryPlaceTree(spot.x, spot.h, spot.z, null);
+    placed.push({ x: spot.x, z: spot.z });
+    if(placed.length >= 4) break;
+  }
+
+  // fallback: nếu vẫn không tìm được (spawn nằm giữa nước), dựng 1 "cây mốc" ngay phía trước
+  if(placed.length === 0){
+    const x = baseX;
+    const z = baseZ - 8;
+    const h = heightAt(x, z);
+    for(let yy=h+1; yy<=h+10; yy++){
+      const t = getBlock(x, yy, z);
+      if(t === BlockType.WATER) removeBlockAt(x, yy, z);
+    }
+    // thân cao hơn để dễ thấy từ xa
+    for(let i=1;i<=7;i++){
+      addBlock(x, h + i, z, BlockType.WOOD);
+    }
+    // tán lá đơn giản
+    for(let dx=-2;dx<=2;dx++){
+      for(let dz=-2;dz<=2;dz++){
+        for(let dy=3;dy<=6;dy++){
+          if(Math.abs(dx) + Math.abs(dz) > 3) continue;
+          const lx = x + dx, ly = h + dy, lz = z + dz;
+          if(getBlock(lx, ly, lz) === BlockType.WATER) removeBlockAt(lx, ly, lz);
+          if(getBlock(lx, ly, lz)) continue;
+          addBlock(lx, ly, lz, BlockType.LEAVES);
+        }
+      }
+    }
+  }
+}
+
 function loadChunk(cx, cz){
   const chunkKey = `${cx},${cz}`;
   if(loadedChunks.has(chunkKey)) return;
@@ -1546,7 +1641,8 @@ function loadChunk(cx, cz){
 
       const topType = getBlock(wx, h, wz);
       // cây xuất hiện dày và có cụm hơn
-      if(topType === BlockType.GRASS && hash2(wx + 99, wz + 99) > 0.82){
+      // giảm ngưỡng một chút để dễ thấy cây hơn (nhất là quanh spawn)
+      if(topType === BlockType.GRASS && hash2(wx + 99, wz + 99) > 0.76){
         tryPlaceTree(wx, h, wz, keys);
       }
 
@@ -1612,8 +1708,45 @@ function updateChunksAroundPlayer(){
 }
 
 // spawn ở gần (0,0) và load chunk xung quanh
-controls.getObject().position.set(0, 30, 0);
+const SPAWN_X = 0;
+const SPAWN_Z = 0;
+const SPAWN_EYE_HEIGHT = 1.62; // khớp với player.eyeHeight phía dưới
+// đặt tạm cao để tránh kẹt khi world chưa render (x,z mới là quan trọng để load chunk)
+controls.getObject().position.set(SPAWN_X, SEA_LEVEL + 12, SPAWN_Z);
 updateChunksAroundPlayer();
+ensureTreesNearSpawn();
+// đưa người chơi xuống gần mặt đất để dễ thấy cây ngay từ đầu (kể cả khi chưa lock chuột)
+{
+  function findClearSpawnXZ(x0, z0, maxR){
+    for(let r=0; r<=maxR; r++){
+      for(let dx=-r; dx<=r; dx++){
+        for(let dz=-r; dz<=r; dz++){
+          const x = x0 + dx;
+          const z = z0 + dz;
+          const h = heightAt(x, z);
+          const ground = getBlock(x, h, z);
+          if(!ground || ground === BlockType.WATER) continue;
+          // cần khoảng trống trên đầu (không có lá/thân cây)
+          if(getBlock(x, h + 1, z)) continue;
+          if(getBlock(x, h + 2, z)) continue;
+          return { x, z, h };
+        }
+      }
+    }
+    return { x: x0, z: z0, h: heightAt(x0, z0) };
+  }
+
+  const spot = findClearSpawnXZ(SPAWN_X, SPAWN_Z, 12);
+  let surfaceY = spot.h + 0.5; // mặt trên block tại y=h
+  // nếu ô spawn nằm dưới nước, đặt trên mực nước biển
+  for(let yy=spot.h+1; yy<=SEA_LEVEL+2; yy++){
+    if(getBlock(spot.x, yy, spot.z) === BlockType.WATER){
+      surfaceY = SEA_LEVEL + 0.5;
+      break;
+    }
+  }
+  controls.getObject().position.set(spot.x, surfaceY + SPAWN_EYE_HEIGHT, spot.z);
+}
 
 /* ================== INPUT ================== */
 const keys = {};
