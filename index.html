@@ -1449,8 +1449,12 @@ if(ui.invBtn){
 }
 
 /* ================== SIMPLE NOISE ================== */
+// seed ngẫu nhiên cho cả map (mỗi lần reload sẽ ra map khác)
+const WORLD_SEED = (Math.random() * 2147483647) | 0;
+
 function hash2(x, z){
-  let n = (x * 374761393 + z * 668265263) ^ (x * 1274126177);
+  // thêm WORLD_SEED để mỗi lần chạy game ra một bản đồ khác
+  let n = (x * 374761393 + z * 668265263 + WORLD_SEED) ^ ((x + WORLD_SEED) * 1274126177);
   n = (n ^ (n >> 13)) * 1274126177;
   n = (n ^ (n >> 16)) >>> 0;
   return n / 4294967296;
@@ -1486,13 +1490,30 @@ function fbm2(x, z){
 // Sinh địa hình theo chunk quanh người chơi (map thực tế là vô hạn)
 const CHUNK_SIZE = 16;
 const VIEW_DISTANCE_CHUNKS = 3; // bán kính chunk quanh người chơi (giảm để nhẹ hơn)
-const WORLD_MAX_H = 18;
-const SEA_LEVEL = 6;
-
+// tăng trần chiều cao và mực nước để có đồi núi rõ rệt hơn
+const WORLD_MAX_H = 42;
+const SEA_LEVEL = 10;
+ 
+// Độ cao địa hình: kết hợp nhiều tầng nhiễu để có cả đồng bằng, đồi thấp và núi cao
 function heightAt(x, z){
-  const n = fbm2(x + 1000, z + 1000); // 0..1
-  const h = Math.floor(SEA_LEVEL + n * 10);
-  return Math.max(2, Math.min(WORLD_MAX_H - 1, h));
+  const nx = (x + WORLD_SEED * 0.13) * 0.03;
+  const nz = (z + WORLD_SEED * 0.17) * 0.03;
+
+  // nền “lục địa” lớn, biến thiên chậm
+  const continent = fbm2(nx * 0.6, nz * 0.6);          // 0..1
+  // gợn đồi nhỏ
+  const hills = fbm2(nx * 2.4 + 100, nz * 2.4 + 100);  // 0..1
+  // núi cao – dùng lũy thừa để chỉ giữ các vùng giá trị cao
+  const mountains = Math.pow(fbm2(nx * 1.3 + 200, nz * 1.3 + 200), 3); // nghiêng về 0, vài chỗ rất cao
+
+  // phối trộn: đồng bằng quanh SEA_LEVEL, đồi + núi cao dần
+  let h = SEA_LEVEL - 3
+        + continent * 10      // nâng/hạ toàn vùng
+        + hills * 8           // đồi lượn sóng
+        + mountains * 20;     // đỉnh núi
+
+  const clamped = Math.floor(Math.max(2, Math.min(WORLD_MAX_H - 1, h)));
+  return clamped;
 }
 
 function tryPlaceTree(x, y, z, keyList){
