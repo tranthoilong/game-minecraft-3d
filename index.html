@@ -1636,6 +1636,8 @@ function loadChunk(cx, cz){
   if(loadedChunks.has(chunkKey)) return;
   loadedChunks.add(chunkKey);
   const keys = [];
+  const grassSpots = [];   // lưu các cột GRASS trong chunk này để có thể trồng thêm cây
+  let treeCount = 0;
 
   for(let lx=0; lx<CHUNK_SIZE; lx++){
     const wx = cx * CHUNK_SIZE + lx;
@@ -1661,18 +1663,13 @@ function loadChunk(cx, cz){
       }
 
       const topType = getBlock(wx, h, wz);
-      // cây xuất hiện dày hơn, ưu tiên vùng đồi cao; bãi biển thì thưa
       if(topType === BlockType.GRASS){
+        grassSpots.push({ x: wx, y: h, z: wz });
+        // Sinh cây ngẫu nhiên trước
         const noiseVal = hash2(wx + 99, wz + 99); // 0..1
-        const heightAboveSea = h - SEA_LEVEL;
-        let threshold = 0.64;      // mặc định: xác suất ~36%
-        if(heightAboveSea >= 10) { // vùng núi/đồi cao → rừng dày hơn
-          threshold = 0.50;        // xác suất 50%
-        } else if(heightAboveSea <= 2) {
-          threshold = 0.76;        // gần mực nước biển → ít cây
-        }
-        if(noiseVal > threshold){
+        if(noiseVal > 0.55){
           tryPlaceTree(wx, h, wz, keys);
+          treeCount++;
         }
       }
 
@@ -1684,6 +1681,21 @@ function loadChunk(cx, cz){
           keys.push(key(wx, wy, wz));
         }
       }
+    }
+  }
+
+  // Đảm bảo mỗi chunk GRASS có ít nhất một lượng cây tối thiểu
+  const MIN_TREES_PER_CHUNK = 6;
+  if(treeCount < MIN_TREES_PER_CHUNK && grassSpots.length > 0){
+    let remaining = MIN_TREES_PER_CHUNK - treeCount;
+    // chọn rải đều trên danh sách grassSpots
+    const step = Math.max(1, Math.floor(grassSpots.length / (remaining + 1)));
+    for(let i = step; i < grassSpots.length && remaining > 0; i += step){
+      const spot = grassSpots[i];
+      // nếu ngay trên ô cỏ đã có thân cây thì bỏ qua
+      if(getBlock(spot.x, spot.y + 1, spot.z)) continue;
+      tryPlaceTree(spot.x, spot.y, spot.z, keys);
+      remaining--;
     }
   }
 
