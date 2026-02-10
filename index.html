@@ -134,6 +134,18 @@
       cursor: grab;
       user-select: none;
     }
+    #inventory .inv-item-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.35);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+      margin-bottom: 2px;
+    }
+    #inventory .inv-item-label {
+      font-size: 10px;
+      opacity: 0.9;
+    }
     #inventory .inv-item.empty {
       opacity: 0.35;
       cursor: default;
@@ -165,6 +177,11 @@
       justify-content: center;
       cursor: grab;
       user-select: none;
+    }
+    #inventory .craft-item .inv-item-icon {
+      width: 18px;
+      height: 18px;
+      margin-bottom: 0;
     }
     #inventory button {
       margin-top: 8px;
@@ -942,6 +959,26 @@ function triggerHitOverlay(){
   }
 }
 
+// Thông tin hiển thị/“icon” cho từng loại item trong túi và bàn chế tạo
+function getItemVisual(key){
+  switch(key){
+    case 'log':
+      return { label: 'Log', color: '#8b4513' };          // nâu đậm
+    case 'plank':
+      return { label: 'Plank', color: '#deb887' };        // nâu vàng
+    case 'stick':
+      return { label: 'Stick', color: '#d2b48c' };        // be nhạt
+    case 'crafting_table':
+      return { label: 'Bàn', color: '#b07040' };          // nâu đỏ
+    case 'rotten_flesh':
+      return { label: 'Flesh', color: '#b84848' };        // đỏ sẫm
+    case 'wood_sword':
+      return { label: 'Kiếm', color: '#c0c0c0' };         // xám nhạt
+    default:
+      return { label: key, color: '#888' };
+  }
+}
+
 function renderInventory(){
   ui.inventory.innerHTML = `
     <h3>Túi đồ & Bàn chế tạo 3×3</h3>
@@ -958,7 +995,16 @@ function renderInventory(){
       <span id="craftResult" style="min-width:120px;text-align:right;"></span>
     </div>
     <div class="row" style="gap:6px;margin-bottom:4px;">
-      <button id="craftOnceBtn" style="margin-top:0;flex:1;" disabled>Chế tạo 1 lần</button>
+      <button id="craftOnceBtn" style="margin-top:0;flex:1;" disabled>Chế tạo 1 lần (theo lưới)</button>
+    </div>
+    <div style="margin-top:4px;font-size:11px;opacity:0.9;line-height:1.5;">
+      <b>Chế tạo nhanh (không cần xếp mẫu)</b>
+      <div style="display:flex;flex-direction:column;gap:4px;margin-top:4px;">
+        <button id="quickPlankBtn" style="margin-top:0;width:100%;font-size:11px;"></button>
+        <button id="quickStickBtn" style="margin-top:0;width:100%;font-size:11px;"></button>
+        <button id="quickTableBtn" style="margin-top:0;width:100%;font-size:11px;"></button>
+        <button id="quickSwordBtn" style="margin-top:0;width:100%;font-size:11px;"></button>
+      </div>
     </div>
     <div style="margin-top:6px;font-size:11px;opacity:0.8;line-height:1.4;">
       <b>Sổ công thức cơ bản</b><br/>
@@ -975,12 +1021,12 @@ function renderInventory(){
   if(invEl){
     invEl.innerHTML = '';
     const items = [
-      { key: 'log',            label: 'Log' },
-      { key: 'plank',          label: 'Plank' },
-      { key: 'stick',          label: 'Stick' },
-      { key: 'crafting_table', label: 'Bàn chế tạo' },
-      { key: 'rotten_flesh',   label: 'Thịt thối' },
-      { key: 'wood_sword',     label: 'Kiếm gỗ' },
+      { key: 'log' },
+      { key: 'plank' },
+      { key: 'stick' },
+      { key: 'crafting_table' },
+      { key: 'rotten_flesh' },
+      { key: 'wood_sword' },
     ];
     for(const info of items){
       const count = inventory[info.key] ?? 0;
@@ -989,7 +1035,11 @@ function renderInventory(){
 
       const itemEl = document.createElement('div');
       itemEl.className = 'inv-item' + (count === 0 ? ' empty' : '');
-      itemEl.textContent = info.label;
+      const v = getItemVisual(info.key);
+      itemEl.innerHTML = `
+        <div class="inv-item-icon" style="background:${v.color};"></div>
+        <div class="inv-item-label">${v.label}</div>
+      `;
 
       const countEl = document.createElement('div');
       countEl.className = 'inv-count';
@@ -1091,17 +1141,11 @@ function renderInventory(){
       if(v){
         const itemEl = document.createElement('div');
         itemEl.className = 'craft-item';
-        // nhãn ngắn theo loại item
-        let label = '?';
-        let title = v;
-        if(v === 'log'){ label = 'L'; title = 'Log (thân cây)'; }
-        else if(v === 'plank'){ label = 'P'; title = 'Plank (ván gỗ)'; }
-        else if(v === 'stick'){ label = 'S'; title = 'Stick (que gỗ)'; }
-        else if(v === 'crafting_table'){ label = 'T'; title = 'Bàn chế tạo'; }
-        else if(v === 'rotten_flesh'){ label = 'F'; title = 'Thịt thối'; }
-        else if(v === 'wood_sword'){ label = 'K'; title = 'Kiếm gỗ'; }
-        itemEl.textContent = label;
-        itemEl.title = title;
+        const vis = getItemVisual(v);
+        itemEl.innerHTML = `
+          <div class="inv-item-icon" style="background:${vis.color};"></div>
+        `;
+        itemEl.title = vis.label;
         itemEl.draggable = true;
         itemEl.addEventListener('dragstart', (ev) => {
           if(!ev.dataTransfer) return;
@@ -1242,7 +1286,17 @@ function renderInventory(){
     const recipe = detectRecipe();
     const ok = !!recipe;
     btn.disabled = !ok;
-    resultEl.textContent = ok ? recipe.label : '';
+    if(ok && recipe){
+      const vis = getItemVisual(recipe.item);
+      resultEl.innerHTML = `
+        <span style="display:inline-flex;align-items:center;gap:4px;">
+          <span class="inv-item-icon" style="width:16px;height:16px;margin-bottom:0;background:${vis.color};border-radius:3px;border:1px solid rgba(255,255,255,0.35);"></span>
+          <span>${recipe.label}</span>
+        </span>
+      `;
+    } else {
+      resultEl.textContent = '';
+    }
     btn.onclick = () => {
       const r = detectRecipe();
       if(!r) return;
@@ -1252,6 +1306,82 @@ function renderInventory(){
       }
       // nguyên liệu đã bị trừ khỏi túi khi kéo vào lưới → chỉ cần xóa lưới
       window.craftGrid = new Array(9).fill(null);
+      renderInventory();
+    };
+  }
+
+  // --- Chế tạo nhanh: không cần kéo vào lưới ---
+  const quickPlankBtn = document.getElementById('quickPlankBtn');
+  const quickStickBtn = document.getElementById('quickStickBtn');
+  const quickTableBtn = document.getElementById('quickTableBtn');
+  const quickSwordBtn = document.getElementById('quickSwordBtn');
+
+  // 1) Log -> Plank (1 log -> 4 plank), craft tối đa
+  if(quickPlankBtn){
+    const maxCraft = Math.floor((inventory.log ?? 0) / 1);
+    quickPlankBtn.disabled = maxCraft <= 0;
+    quickPlankBtn.textContent = maxCraft > 0
+      ? `Plank: 1 Log → 4 Plank (tối đa ${maxCraft} lần)`
+      : 'Plank: cần ít nhất 1 Log';
+    quickPlankBtn.onclick = () => {
+      const maxNow = Math.floor((inventory.log ?? 0) / 1);
+      if(maxNow <= 0) return;
+      inventory.log -= maxNow;
+      inventory.plank += maxNow * 4;
+      renderInventory();
+    };
+  }
+
+  // 2) Plank -> Stick (2 plank -> 4 stick), craft tối đa
+  if(quickStickBtn){
+    const maxCraft = Math.floor((inventory.plank ?? 0) / 2);
+    quickStickBtn.disabled = maxCraft <= 0;
+    quickStickBtn.textContent = maxCraft > 0
+      ? `Stick: 2 Plank → 4 Stick (tối đa ${maxCraft} lần)`
+      : 'Stick: cần ít nhất 2 Plank';
+    quickStickBtn.onclick = () => {
+      const maxNow = Math.floor((inventory.plank ?? 0) / 2);
+      if(maxNow <= 0) return;
+      inventory.plank -= maxNow * 2;
+      inventory.stick += maxNow * 4;
+      renderInventory();
+    };
+  }
+
+  // 3) Bàn chế tạo: 4 plank -> 1 table, craft tối đa
+  if(quickTableBtn){
+    const maxCraft = Math.floor((inventory.plank ?? 0) / 4);
+    quickTableBtn.disabled = maxCraft <= 0;
+    quickTableBtn.textContent = maxCraft > 0
+      ? `Bàn chế tạo: 4 Plank → 1 Bàn (tối đa ${maxCraft})`
+      : 'Bàn chế tạo: cần ít nhất 4 Plank';
+    quickTableBtn.onclick = () => {
+      const maxNow = Math.floor((inventory.plank ?? 0) / 4);
+      if(maxNow <= 0) return;
+      inventory.plank -= maxNow * 4;
+      inventory.crafting_table += maxNow;
+      renderInventory();
+    };
+  }
+
+  // 4) Kiếm gỗ: 2 plank + 1 stick -> 1 kiếm, craft tối đa
+  if(quickSwordBtn){
+    const maxByPlank = Math.floor((inventory.plank ?? 0) / 2);
+    const maxByStick = inventory.stick ?? 0;
+    const maxCraft = Math.min(maxByPlank, maxByStick);
+    quickSwordBtn.disabled = maxCraft <= 0;
+    quickSwordBtn.textContent = maxCraft > 0
+      ? `Kiếm gỗ: 2 Plank + 1 Stick → 1 Kiếm (tối đa ${maxCraft})`
+      : 'Kiếm gỗ: cần 2 Plank + 1 Stick';
+    quickSwordBtn.onclick = () => {
+      const maxByPl = Math.floor((inventory.plank ?? 0) / 2);
+      const maxBySt = inventory.stick ?? 0;
+      const maxNow = Math.min(maxByPl, maxBySt);
+      if(maxNow <= 0) return;
+      inventory.plank -= maxNow * 2;
+      inventory.stick -= maxNow;
+      inventory.wood_sword += maxNow;
+      if(inventory.wood_sword > 0) hasWoodSword = true;
       renderInventory();
     };
   }
