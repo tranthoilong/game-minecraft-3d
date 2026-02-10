@@ -1004,7 +1004,7 @@ function renderInventory(){
     </div>
     <div id="invItems" class="inv-row"></div>
     <div style="margin:6px 0 4px;font-size:12px;opacity:0.8;">
-      Sách hướng dẫn chế tạo (Log, Plank, Stick, Bàn, Kiếm).
+      Sách hướng dẫn chế tạo (Log, Plank, Stick, Kiếm).
     </div>
     <!-- Lưới 3×3 vẫn tồn tại cho logic nội bộ nhưng bị ẩn khỏi người chơi -->
     <div id="craftGrid" style="display:none;grid-template-columns:repeat(3,28px);grid-gap:4px;margin-bottom:8px;"></div>
@@ -1333,9 +1333,23 @@ function renderInventory(){
   if(quickPlankBtn){
     const maxCraft = Math.floor((inventory.log ?? 0) / 1);
     quickPlankBtn.disabled = maxCraft <= 0;
-    quickPlankBtn.textContent = maxCraft > 0
-      ? `Plank: 1 Log → 4 Plank (tối đa ${maxCraft} lần)`
-      : 'Plank: cần ít nhất 1 Log';
+    const logVis = getItemVisual('log');
+    const plankVis = getItemVisual('plank');
+    if(maxCraft > 0){
+      quickPlankBtn.innerHTML = `
+        <div style="display:flex;align-items:center;gap:6px;justify-content:flex-start;">
+          <span class="inv-item-icon" style="width:16px;height:16px;margin-bottom:0;background:${logVis.color};${logVis.bg ? 'background-image:'+logVis.bg+';' : ''}border-radius:3px;border:1px solid rgba(255,255,255,0.35);"></span>
+          <span>x1 →</span>
+          <span class="inv-item-icon" style="width:16px;height:16px;margin-bottom:0;background:${plankVis.color};${plankVis.bg ? 'background-image:'+plankVis.bg+';' : ''}border-radius:3px;border:1px solid rgba(255,255,255,0.35);"></span>
+          <span>x4</span>
+        </div>
+        <div style="margin-top:2px;font-size:10px;opacity:0.9;">Có thể chế tạo tối đa ${maxCraft} lần</div>
+      `;
+    } else {
+      quickPlankBtn.innerHTML = `
+        <div style="font-size:11px;">Plank: cần ít nhất 1 Log</div>
+      `;
+    }
     quickPlankBtn.onclick = () => {
       const maxNow = Math.floor((inventory.log ?? 0) / 1);
       if(maxNow <= 0) return;
@@ -1349,9 +1363,23 @@ function renderInventory(){
   if(quickStickBtn){
     const maxCraft = Math.floor((inventory.plank ?? 0) / 2);
     quickStickBtn.disabled = maxCraft <= 0;
-    quickStickBtn.textContent = maxCraft > 0
-      ? `Stick: 2 Plank → 4 Stick (tối đa ${maxCraft} lần)`
-      : 'Stick: cần ít nhất 2 Plank';
+    const plankVis = getItemVisual('plank');
+    const stickVis = getItemVisual('stick');
+    if(maxCraft > 0){
+      quickStickBtn.innerHTML = `
+        <div style="display:flex;align-items:center;gap:6px;justify-content:flex-start;">
+          <span class="inv-item-icon" style="width:16px;height:16px;margin-bottom:0;background:${plankVis.color};${plankVis.bg ? 'background-image:'+plankVis.bg+';' : ''}border-radius:3px;border:1px solid rgba(255,255,255,0.35);"></span>
+          <span>x2 →</span>
+          <span class="inv-item-icon" style="width:16px;height:16px;margin-bottom:0;background:${stickVis.color};${stickVis.bg ? 'background-image:'+stickVis.bg+';' : ''}border-radius:3px;border:1px solid rgba(255,255,255,0.35);"></span>
+          <span>x4</span>
+        </div>
+        <div style="margin-top:2px;font-size:10px;opacity:0.9;">Có thể chế tạo tối đa ${maxCraft} lần</div>
+      `;
+    } else {
+      quickStickBtn.innerHTML = `
+        <div style="font-size:11px;">Stick: cần ít nhất 2 Plank</div>
+      `;
+    }
     quickStickBtn.onclick = () => {
       const maxNow = Math.floor((inventory.plank ?? 0) / 2);
       if(maxNow <= 0) return;
@@ -1367,9 +1395,26 @@ function renderInventory(){
     const maxByStick = inventory.stick ?? 0;
     const maxCraft = Math.min(maxByPlank, maxByStick);
     quickSwordBtn.disabled = maxCraft <= 0;
-    quickSwordBtn.textContent = maxCraft > 0
-      ? `Kiếm gỗ: 2 Plank + 1 Stick → 1 Kiếm (tối đa ${maxCraft})`
-      : 'Kiếm gỗ: cần 2 Plank + 1 Stick';
+    const plankVis = getItemVisual('plank');
+    const stickVis = getItemVisual('stick');
+    const swordVis = getItemVisual('wood_sword');
+    if(maxCraft > 0){
+      quickSwordBtn.innerHTML = `
+        <div style="display:flex;align-items:center;gap:6px;justify-content:flex-start;">
+          <span class="inv-item-icon" style="width:16px;height:16px;margin-bottom:0;background:${plankVis.color};${plankVis.bg ? 'background-image:'+plankVis.bg+';' : ''}border-radius:3px;border:1px solid rgba(255,255,255,0.35);"></span>
+          <span>x2 +</span>
+          <span class="inv-item-icon" style="width:16px;height:16px;margin-bottom:0;background:${stickVis.color};${stickVis.bg ? 'background-image:'+stickVis.bg+';' : ''}border-radius:3px;border:1px solid rgba(255,255,255,0.35);"></span>
+          <span>x1 →</span>
+          <span class="inv-item-icon" style="width:16px;height:16px;margin-bottom:0;background:${swordVis.color};${swordVis.bg ? 'background-image:'+swordVis.bg+';' : ''}border-radius:3px;border:1px solid rgba(255,255,255,0.35);"></span>
+          <span>x1</span>
+        </div>
+        <div style="margin-top:2px;font-size:10px;opacity:0.9;">Có thể chế tạo tối đa ${maxCraft} kiếm</div>
+      `;
+    } else {
+      quickSwordBtn.innerHTML = `
+        <div style="font-size:11px;">Kiếm gỗ: cần 2 Plank + 1 Stick</div>
+      `;
+    }
     quickSwordBtn.onclick = () => {
       const maxByPl = Math.floor((inventory.plank ?? 0) / 2);
       const maxBySt = inventory.stick ?? 0;
