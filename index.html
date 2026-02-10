@@ -1661,10 +1661,19 @@ function loadChunk(cx, cz){
       }
 
       const topType = getBlock(wx, h, wz);
-      // cây xuất hiện dày và có cụm hơn
-      // giảm ngưỡng một chút để dễ thấy cây hơn (nhất là quanh spawn)
-      if(topType === BlockType.GRASS && hash2(wx + 99, wz + 99) > 0.76){
-        tryPlaceTree(wx, h, wz, keys);
+      // cây xuất hiện dày hơn, ưu tiên vùng đồi cao; bãi biển thì thưa
+      if(topType === BlockType.GRASS){
+        const noiseVal = hash2(wx + 99, wz + 99); // 0..1
+        const heightAboveSea = h - SEA_LEVEL;
+        let threshold = 0.64;      // mặc định: xác suất ~36%
+        if(heightAboveSea >= 10) { // vùng núi/đồi cao → rừng dày hơn
+          threshold = 0.50;        // xác suất 50%
+        } else if(heightAboveSea <= 2) {
+          threshold = 0.76;        // gần mực nước biển → ít cây
+        }
+        if(noiseVal > threshold){
+          tryPlaceTree(wx, h, wz, keys);
+        }
       }
 
       // fill low areas with water (simple lakes / biển)
