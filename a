@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mini Minecraft — Crafting & Items (Fixed Movement)</title>
+  <style>
+    html,body{height:100%;margin:0;overflow:hidden;font-family:Inter,Arial}
+    #hud{position:fixed;left:12px;top:12px;color:#fff;background:rgba(0,0,0,0.35);padding:10px;border-radius:8px;z-index:30}
+    #hud b{display:block}
+    #blockPicker{display:flex;gap:6px;margin-top:8px}
+    .blockBtn{padding:6px 8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.06);color:#fff;cursor:pointer}
+    #overlay{position:fixed;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;color:#fff;pointer-events:none;z-index:29}
+    #clickToPlay{pointer-events:auto;background:rgba(0,0,0,0.6);padding:18px;border-radius:10px;cursor:pointer}
+    #status{position:fixed;right:12px;top:12px;color:#fff;background:rgba(0,0,0,0.35);padding:8px;border-radius:6px;font-size:13px;z-index:30}
+    #perf{position:fixed;right:12px;bottom:12px;color:#fff;background:rgba(0,0,0,0.35);padding:6px;border-radius:6px;font-size:13px;z-index:30}
+    #hotbar{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;display:flex;gap:6px;z-index:31}
+    .slot{width:56px;height:56px;border-radius:6px;background:rgba(0,0,0,0.45);border:2px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600}
+    .slot.active{outline:3px solid #ffd54f}
+    #craftUI{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);padding:12px;border-radius:8px;display:none;z-index:40;color:#fff}
+    #craftUI h3{margin:6px 0}
+    .recipe{display:flex;align-items:center;gap:8px;margin:6px 0}
+    .recipe button{padding:6px 10px;border-radius:6px;cursor:pointer}
+    #inv{margin-top:8px;display:flex;gap:8px}
+    .invSlot{min-width:90px;padding:6px;background:rgba(255,255,255,0.04);border-radius:6px;text-align:center}
+    #error{position:fixed;left:50%;top:80%;transform:translateX(-50%);background:#ff4d4f;color:#fff;padding:8px 12px;border-radius:6px;display:none;z-index:50}
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <div><b>Mini Minecraft (crafting)</b></div>
+    <div id="info">Loading...</div>
+    <div id="blockPicker"></div>
+    <div style="font-size:12px;margin-top:6px;opacity:0.9">Controls: WASD • Mouse look • LMB place • RMB remove • Space jump • 1–6 change item • C craft</div>
+  </div>
+  <div id="hotbar"></div>
+  <div id="status">chunks: 0</div>
+  <div id="perf">perf: balanced</div>
+  <div id="overlay"><div id="clickToPlay">Click to lock pointer & start — Press Esc to unlock</div></div>
+  <div id="craftUI">
+    <h3>Crafting</h3>
+    <div class="recipe"><div>Wood → 4 Planks</div><button id="craftPlanks">Craft</button></div>
+    <div class="recipe"><div>4 Planks → 1 Crafting Table</div><button id="craftTable">Craft</button></div>
+    <div id="inv"></div>
+    <div style="margin-top:8px;text-align:right"><button id="closeCraft">Close</button></div>
+  </div>
+  <div id="error"></div>
+
+  <script src="https://unpkg.com/three@0.124.0/build/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.124.0/examples/js/controls/PointerLockControls.js"></script>
+
+  <script>
+  (function(){
+    const errEl=document.getElementById('error'); function showError(msg){ console.error(msg); errEl.textContent=msg; errEl.style.display='block'; }
+    if(!window.THREE){ showError('Three.js failed to load.'); return; }
+    if(typeof THREE.PointerLockControls !== 'function'){ showError('PointerLockControls unavailable (need legacy build).'); return; }
+
+    // CONFIG
+    const CHUNK_SIZE=16, LOAD_RADIUS=1, BLOCK_SIZE=1;
+    const MIN_Y=-6, PLAYER_HEIGHT=1.6, PLAYER_RADIUS=0.28;
+    const GRAVITY=-30, MOVE_SPEED=6, WATER_LEVEL=2;
+
+    // BLOCKS
+    const BLOCKS=[
+      {id:0,name:'Air',solid:false},
+      {id:1,name:'Grass',color:0x4caf50,solid:true},
+      {id:2,name:'Dirt',color:0x8d6e63,solid:true},
+      {id:3,name:'Stone',color:0x9e9e9e,solid:true},
+      {id:4,name:'Wood',color:0x8b5a2b,solid:true},
+      {id:5,name:'Leaves',color:0x2e7d32,solid:false},
+      {id:6,name:'Water',color:0x2196f3,solid:false},
+      {id:7,name:'CraftingTable',color:0x6d4c41,solid:true}
+    ];
+
+    // ITEMS + INVENTORY
+    const ITEM_KEYS=['wood','plank','crafting_table'];
+    const inventory = { wood:5, plank:0, crafting_table:0 };
+    function addItem(name,amt=1){ inventory[name]=(inventory[name]||0)+amt; updateInvUI(); }
+    function removeItem(name,amt=1){ if((inventory[name]||0) < amt) return false; inventory[name]-=amt; updateInvUI(); return true; }
+
+    // SCENE
+    const scene=new THREE.Scene(); scene.background=new THREE.Color(0x87ceeb);
+    const camera=new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
+    const renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setSize(innerWidth, innerHeight); renderer.setPixelRatio(1); renderer.shadowMap.enabled=false; document.body.appendChild(renderer.domElement);
+    scene.add(new THREE.HemisphereLight(0xffffff,0x444444,0.9)); const sun=new THREE.DirectionalLight(0xffffff,0.8); sun.position.set(10,20,10); scene.add(sun);
+
+    // GEOMETRY & MATERIALS
+    const BOX=new THREE.BoxGeometry(1,1,1); const materials={};
+    for(const b of BLOCKS){
+      if(b.id===6) materials[b.id]=new THREE.MeshPhongMaterial({color:b.color,transparent:true,opacity:0.55,depthWrite:false});
+      else materials[b.id]=b.solid? new THREE.MeshLambertMaterial({color:b.color}) : new THREE.MeshLambertMaterial({color:b.color,transparent:true,opacity:0.8});
+    }
+
+    // WORLD / CHUNKS
+    const world=new Map(); const chunks=new Map(); const statusEl=document.getElementById('status'); const perfEl=document.getElementById('perf'); const hotbarEl=document.getElementById('hotbar');
+    const key=(x,y,z)=>`${x},${y},${z}`; const chunkKey=(cx,cz)=>`${cx},${cz}`;
+
+    function addBlock(x,y,z,type){ if(type===0) return; const k=key(x,y,z); if(world.has(k)) return; const mesh=new THREE.Mesh(BOX, materials[type]); mesh.position.set(x+0.5,y+0.5,z+0.5); if(type===6) mesh.renderOrder=2; scene.add(mesh); world.set(k,{mesh,type}); return mesh; }
+    function removeBlock(x,y,z){ const k=key(x,y,z); if(!world.has(k)) return null; const obj=world.get(k); scene.remove(obj.mesh); world.delete(k); return obj.type; }
+    function getBlock(x,y,z){ return world.get(key(x,y,z)) || null; }
+    function isSolidAt(x,y,z){ const b=getBlock(Math.floor(x),Math.floor(y),Math.floor(z)); return b && BLOCKS.find(bb=>bb.id===b.type)?.solid; }
+
+    function pseudoNoise(x,z){ let n=x+z*57; n=(n<<13)^n; const t=(n*(n*n*15731+789221)+1376312589)&0x7fffffff; return t/0x7fffffff; }
+    function getHeight(x,z){ const h=3+Math.floor(Math.sin(x*0.18)*2.2+Math.cos(z*0.15)*2.0+(pseudoNoise(x,z)-0.5)*2.5); return Math.max(MIN_Y+2, Math.min(20,h)); }
+
+    function maybePlaceTree(baseX,baseY,baseZ, chance=0.04){ if(Math.random()>chance) return; const trunk=3+Math.floor(Math.random()*3); for(let i=0;i<trunk;i++) addBlock(baseX,baseY+i,baseZ,4); const leafStart=baseY+trunk-1; for(let ox=-2;ox<=2;ox++)for(let oz=-2;oz<=2;oz++)for(let oy=0;oy<=2;oy++){ if(Math.abs(ox)+Math.abs(oz)+oy<4) addBlock(baseX+ox,leafStart+oy,baseZ+oz,5); } }
+
+    function generateChunk(cx,cz){ const ck=chunkKey(cx,cz); if(chunks.has(ck)) return; const keys=new Set(); const baseX=cx*CHUNK_SIZE, baseZ=cz*CHUNK_SIZE; for(let ix=0;ix<CHUNK_SIZE;ix++){ for(let iz=0;iz<CHUNK_SIZE;iz++){ const x=baseX+ix, z=baseZ+iz; const h=getHeight(x,z); for(let y=MIN_Y;y<h;y++){ let type=3; if(y>=h-1) type=1; else if(y>=h-3) type=2; const m=addBlock(x,y,z,type); if(m) keys.add(key(x,y,z)); } if(h < WATER_LEVEL){ for(let wy=h;wy<WATER_LEVEL;wy++){ const m=addBlock(x,wy,z,6); if(m) keys.add(key(x,wy,z)); } } if(h>=WATER_LEVEL+1) maybePlaceTree(x,h-1,z,0.04); } } chunks.set(ck,{cx,cz,keys}); updateStatus(); }
+
+    function unloadChunk(cx,cz){ const ck=chunkKey(cx,cz); if(!chunks.has(ck)) return; const ch=chunks.get(ck); for(const bk of ch.keys){ if(world.has(bk)){ scene.remove(world.get(bk).mesh); world.delete(bk); } } chunks.delete(ck); updateStatus(); }
+
+    function ensureChunks(centerCx,centerCz){ for(let dx=-LOAD_RADIUS;dx<=LOAD_RADIUS;dx++) for(let dz=-LOAD_RADIUS;dz<=LOAD_RADIUS;dz++) generateChunk(centerCx+dx, centerCz+dz); for(const [k,ch] of Array.from(chunks.entries())){ const dist=Math.max(Math.abs(ch.cx-centerCx),Math.abs(ch.cz-centerCz)); if(dist>LOAD_RADIUS+1) unloadChunk(ch.cx,ch.cz); } }
+    function updateStatus(){ statusEl.textContent=`chunks: ${chunks.size}`; perfEl.textContent=`perf: balanced`; }
+
+    ensureChunks(0,0); console.assert(chunks.size>0,'chunks failed');
+
+    // CONTROLS & PLAYER
+    const controls=new THREE.PointerLockControls(camera, document.body); scene.add(controls.getObject()); const overlay=document.getElementById('overlay'); const clickBtn=document.getElementById('clickToPlay'); function requestLock(){ try{ controls.lock(); }catch(e){ if(document.body.requestPointerLock) document.body.requestPointerLock(); } } clickBtn.addEventListener('click', requestLock); controls.addEventListener('lock',()=>overlay.style.display='none'); controls.addEventListener('unlock',()=>overlay.style.display='flex');
+
+    function placePlayerAboveGround(x,z){ let h=getHeight(Math.round(x),Math.round(z)); controls.getObject().position.set(x, h+PLAYER_HEIGHT+0.2, z); let attempts=0; while(checkAABBCollisionAt(controls.getObject().position) && attempts<10){ controls.getObject().position.y+=1; attempts++; } }
+    placePlayerAboveGround(0,0);
+
+    // HOTBAR & INVENTORY
+    const HOTBAR_SLOTS=['wood','plank','crafting_table']; let currentItem='wood';
+    function buildHotbar(){ hotbarEl.innerHTML=''; for(let i=0;i<HOTBAR_SLOTS.length;i++){ const id=HOTBAR_SLOTS[i]; const slot=document.createElement('div'); slot.className='slot'; slot.id=`slot-${id}`; slot.textContent = id.charAt(0).toUpperCase(); slot.onclick = ()=>selectItem(id); hotbarEl.appendChild(slot); } refreshHotbar(); updateInvUI(); }
+    function refreshHotbar(){ for(const id of HOTBAR_SLOTS){ const el=document.getElementById(`slot-${id}`); if(!el) continue; el.classList.toggle('active', id===currentItem); el.title = `${id}: ${inventory[id]||0}`; } }
+    function selectItem(id){ currentItem=id; updateHUD(); refreshHotbar(); }
+    buildHotbar();
+
+    function updateInvUI(){ const invEl=document.getElementById('inv'); if(!invEl) return; invEl.innerHTML=''; for(const k of ITEM_KEYS){ const div=document.createElement('div'); div.className='invSlot'; div.innerHTML=`<div><b>${k}</b></div><div>${inventory[k]||0}</div>`; invEl.appendChild(div); } refreshHotbar(); }
+
+    // RAYCAST target
+    const raycaster=new THREE.Raycaster(); function getTargetedBlock(){ raycaster.setFromCamera({x:0,y:0}, camera); const objs=Array.from(world.values()).map(o=>o.mesh); const hits=raycaster.intersectObjects(objs,false); if(!hits.length) return null; const it=hits[0]; const pos=it.object.position.clone().subScalar(0.5); const blockPos={x:Math.round(pos.x), y:Math.round(pos.y), z:Math.round(pos.z)}; const face=it.face&&it.face.normal?it.face.normal.clone():new THREE.Vector3(0,1,0); return {blockPos, face}; }
+
+    // COLLISION AABB
+    function checkAABBCollisionAt(pos){ const r=PLAYER_RADIUS; const minX=Math.floor(pos.x-r); const maxX=Math.floor(pos.x+r); const minZ=Math.floor(pos.z-r); const maxZ=Math.floor(pos.z+r); const bottomY=Math.floor(pos.y-PLAYER_HEIGHT+0.01); const topY=Math.floor(pos.y-0.01); for(let x=minX;x<=maxX;x++) for(let z=minZ;z<=maxZ;z++) for(let y=bottomY;y<=topY;y++) if(isSolidAt(x,y,z)) return true; return false; }
+
+    // --- FIX: declare keys BEFORE animate & event listeners ---
+    const keys = {};
+
+    // MOUSE interactions: place/remove, and drops
+    document.addEventListener('mousedown', e=>{ if(!controls.isLocked) return; e.preventDefault(); const t=getTargetedBlock(); if(!t) return; const bp=t.blockPos; if(e.button===0){ // place
+        if(currentItem==='crafting_table'){ if(removeItem('crafting_table',1)){ addBlock(bp.x + t.face.x, bp.y + t.face.y, bp.z + t.face.z, 7); const cx=Math.floor((bp.x+t.face.x)/CHUNK_SIZE), cz=Math.floor((bp.z+t.face.z)/CHUNK_SIZE); const ck=chunkKey(cx,cz); if(chunks.has(ck)) chunks.get(ck).keys.add(key(bp.x+t.face.x,bp.y+t.face.y,bp.z+t.face.z)); } }
+        else if(currentItem==='wood'){ if(removeItem('wood',1)){ addBlock(bp.x + t.face.x, bp.y + t.face.y, bp.z + t.face.z, 4); const cx=Math.floor((bp.x+t.face.x)/CHUNK_SIZE), cz=Math.floor((bp.z+t.face.z)/CHUNK_SIZE); const ck=chunkKey(cx,cz); if(chunks.has(ck)) chunks.get(ck).keys.add(key(bp.x+t.face.x,bp.y+t.face.y,bp.z+t.face.z)); } }
+      } else if(e.button===2){ // remove -> drop item if wood or crafting table
+        const removedType = removeBlock(bp.x,bp.y,bp.z);
+        if(removedType===4) addItem('wood',1);
+        if(removedType===7) addItem('crafting_table',1);
+      } });
+    addEventListener('contextmenu', e=>e.preventDefault());
+
+    // CRAFTING UI
+    const craftUI=document.getElementById('craftUI'); document.getElementById('craftPlanks').addEventListener('click', ()=>{ if(removeItem('wood',1)){ addItem('plank',4); } }); document.getElementById('craftTable').addEventListener('click', ()=>{ if(removeItem('plank',4)){ addItem('crafting_table',1); } }); document.getElementById('closeCraft').addEventListener('click', ()=>{ craftUI.style.display='none'; });
+
+    // HUD
+    const infoEl=document.getElementById('info'); const pickerEl=document.getElementById('blockPicker'); function updateHUD(){ const name = currentItem || 'None'; infoEl.innerHTML = `Holding: <b>${name}</b><br>Chunks: ${chunks.size} | Blocks: ${world.size}`; pickerEl.innerHTML=''; for(const b of BLOCKS) if(b.solid){ const btn=document.createElement('button'); btn.className='blockBtn'; btn.textContent=b.name; btn.onclick=()=>{}; pickerEl.appendChild(btn); } }
+    updateHUD(); updateInvUI();
+
+    // safety respawn
+    function safetyRespawn(){ if(controls.getObject().position.y < MIN_Y - 8){ const cx=Math.floor(controls.getObject().position.x/CHUNK_SIZE); const cz=Math.floor(controls.getObject().position.z/CHUNK_SIZE); ensureChunks(cx,cz); placePlayerAboveGround(cx*CHUNK_SIZE+CHUNK_SIZE/2, cz*CHUNK_SIZE+CHUNK_SIZE/2); } }
+
+    // MAIN LOOP
+    const player={velocity:new THREE.Vector3(),direction:new THREE.Vector3(),onGround:false}; let prev=performance.now(); let lastCenter={cx:Math.floor(controls.getObject().position.x/CHUNK_SIZE), cz:Math.floor(controls.getObject().position.z/CHUNK_SIZE)};
+    function animate(){ const now=performance.now(); const dt=Math.min(0.05,(now-prev)/1000); prev=now; const pcx=Math.floor(controls.getObject().position.x/CHUNK_SIZE); const pcz=Math.floor(controls.getObject().position.z/CHUNK_SIZE); ensureChunks(pcx,pcz);
+      if(controls.isLocked){
+        // Movement mapping: W -> forward, S -> back, A -> left, D -> right
+        player.direction.set(0,0,0);
+        if(keys['KeyW']) player.direction.z += 1;
+        if(keys['KeyS']) player.direction.z -= 1;
+        if(keys['KeyA']) player.direction.x -= 1;
+        if(keys['KeyD']) player.direction.x += 1;
+        player.direction.normalize();
+
+        const yaw=controls.getObject().rotation.y;
+        const forward=new THREE.Vector3(0,0,-1).applyAxisAngle(new THREE.Vector3(0,1,0), yaw);
+        const right=new THREE.Vector3(1,0,0).applyAxisAngle(new THREE.Vector3(0,1,0), yaw);
+        const moveDir=new THREE.Vector3(); moveDir.addScaledVector(forward, player.direction.z); moveDir.addScaledVector(right, player.direction.x);
+        if(moveDir.lengthSq()>0) moveDir.normalize();
+
+        // apply velocities
+        player.velocity.x = moveDir.x * MOVE_SPEED;
+        player.velocity.z = moveDir.z * MOVE_SPEED;
+
+        // gravity
+        player.velocity.y += GRAVITY * dt;
+
+        // current pos
+        const curPos = controls.getObject().position.clone();
+
+        // horizontal tentative move
+        const tentative = curPos.clone().addScaledVector(new THREE.Vector3(player.velocity.x,0,player.velocity.z), dt);
+        if(checkAABBCollisionAt(tentative)){
+          tentative.x = curPos.x; tentative.z = curPos.z; player.velocity.x = 0; player.velocity.z = 0;
+        }
+
+        // apply vertical movement
+        tentative.y += player.velocity.y * dt;
+
+        // ground collision
+        const footY = Math.floor((tentative.y - PLAYER_HEIGHT) / BLOCK_SIZE);
+        const footX = Math.floor(tentative.x);
+        const footZ = Math.floor(tentative.z);
+        if(isSolidAt(footX, footY, footZ)){
+          tentative.y = (footY + 1) * BLOCK_SIZE + PLAYER_HEIGHT + 0.001;
+          player.velocity.y = 0; player.onGround = true;
+        } else {
+          player.onGround = false;
+        }
+
+        // jump
+        if(keys['Space'] && player.onGround){ player.velocity.y = 10; player.onGround = false; }
+
+        controls.getObject().position.copy(tentative);
+
+        const cx=Math.floor(controls.getObject().position.x/CHUNK_SIZE);
+        const cz=Math.floor(controls.getObject().position.z/CHUNK_SIZE);
+        if(cx!==lastCenter.cx || cz!==lastCenter.cz){ ensureChunks(cx,cz); lastCenter={cx,cz}; updateHUD(); }
+      }
+      safetyRespawn(); statusEl.textContent=`chunks: ${chunks.size} | blocks: ${world.size}`; renderer.render(scene,camera); requestAnimationFrame(animate);
+    }
+    animate();
+
+    // INPUT: key state and hotbar digits
+    window.addEventListener('keydown', e=>{ keys[e.code]=true; // hotbar via Digit1..6 -> map to HOTBAR_SLOTS if present
+      if(e.code.startsWith('Digit')){ const idx=parseInt(e.code.slice(5)); if(!isNaN(idx) && HOTBAR_SLOTS[idx-1]) selectItem(HOTBAR_SLOTS[idx-1]); }
+      if(e.code==='Space') e.preventDefault(); // prevent page scroll
+      if(e.code==='KeyC'){ craftUI.style.display = craftUI.style.display === 'none' ? 'block' : 'none'; updateInvUI(); }
+    });
+    window.addEventListener('keyup', e=>{ keys[e.code]=false; });
+
+    // resize
+    addEventListener('resize', ()=>{ camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+
+    console.log('Crafting build (movement fixed) loaded.');
+  })();
+  </script>
+</body>
+</html>
+
+
+
+đang bị lỗi là khi tôi nhấn W thì nó đi tới nhưng tôi xoay chuột về phía sau, nhấn W thì nó lại là đi lui 
