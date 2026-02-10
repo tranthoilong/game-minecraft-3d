@@ -107,6 +107,44 @@
       font-size: 13px;
       box-shadow: 0 18px 40px rgba(0,0,0,0.6);
     }
+    #inventory .inv-row {
+      display: flex;
+      gap: 6px;
+      margin: 4px 0 8px;
+    }
+    #inventory .inv-slot {
+      width: 52px;
+      height: 52px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.03);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      font-size: 11px;
+    }
+    #inventory .inv-item {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      user-select: none;
+    }
+    #inventory .inv-item.empty {
+      opacity: 0.35;
+      cursor: default;
+    }
+    #inventory .inv-count {
+      position: absolute;
+      right: 4px;
+      bottom: 2px;
+      font-size: 10px;
+      opacity: 0.9;
+    }
     #inventory h3 {
       margin: 0 0 8px;
       font-size: 15px;
@@ -115,6 +153,18 @@
       display: flex;
       justify-content: space-between;
       margin: 4px 0;
+    }
+    #inventory .craft-cell {
+      background: rgba(255,255,255,0.02);
+    }
+    #inventory .craft-item {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      user-select: none;
     }
     #inventory button {
       margin-top: 8px;
@@ -159,6 +209,14 @@
       background: rgba(0,0,0,0.35);
       backdrop-filter: blur(6px);
       pointer-events: none;
+    }
+    #hitOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,0,0,0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.08s linear;
     }
     .slot {
       width: 54px;
@@ -219,6 +277,7 @@
   <div id="inventory">
     <div class="panel"></div>
   </div>
+  <div id="hitOverlay"></div>
 </div>
 
 <script type="module">
@@ -267,7 +326,12 @@ scene.add(moonSphere);
 
 /* ================== CONTROLS ================== */
 const controls = new PointerLockControls(camera, document.body);
-document.body.addEventListener('click', () => controls.lock());
+document.body.addEventListener('click', (e) => {
+  // đang mở túi đồ / click lên UI thì không lock chuột
+  if (window.inventoryOpen) return;
+  if (e.target instanceof HTMLElement && e.target.closest('#inventory')) return;
+  controls.lock();
+});
 scene.add(controls.getObject());
 
 /* ================== WORLD DATA ================== */
@@ -305,6 +369,7 @@ const ui = {
   hpBar: document.getElementById('hpBar'),
   invBtn: document.getElementById('invBtn'),
   inventory: document.querySelector('#inventory .panel'),
+  hitOverlay: document.getElementById('hitOverlay'),
 };
 
 /* ================== BLOCKS ================== */
@@ -516,6 +581,8 @@ let inventoryOpen = false;
 const projectiles = []; // mũi tên từ skeleton
 const arrowGeo = new THREE.BoxGeometry(0.12, 0.12, 0.9);
 const arrowMat = new THREE.MeshBasicMaterial({ color: 0xffe0a0 });
+const ARROW_GRAVITY = 18;
+let hitOverlayAlpha = 0;
 
 function spawnZombieAt(x, z){
   const h = heightAt(x, z);
@@ -646,9 +713,9 @@ function updateMobs(delta){
         mob.mesh.position.set(nextX, groundY, nextZ);
       }
 
-      // skeleton bắn tên khi trong tầm nhìn
-      const minShoot = 6;
-      const maxShoot = 22;
+      // skeleton bắn tên khi trong tầm nhìn (tầm bắn ngắn hơn)
+      const minShoot = 5;
+      const maxShoot = 14;
       if(distXZ > minShoot && distXZ < maxShoot && now - mob.lastAttackTime > 1.4){
         mob.lastAttackTime = now;
         const dir = new THREE.Vector3(dx, 0.6, dz).normalize();
@@ -683,6 +750,7 @@ function updateMobs(delta){
     if(mob.type === MobType.ZOMBIE && distXZ < 1.4 && now - mob.lastAttackTime > 0.7){
       mob.lastAttackTime = now;
       playerHP = Math.max(0, playerHP - 1);
+      triggerHitOverlay();
     }
 
     newMobs.push(mob);
@@ -696,8 +764,8 @@ function spawnArrow(origin, dir){
   const mesh = new THREE.Mesh(arrowGeo, arrowMat);
   mesh.position.copy(origin);
   scene.add(mesh);
-  const vel = dir.clone().normalize().multiplyScalar(20);
-  projectiles.push({ mesh, vel, life: 3 });
+  const vel = dir.clone().normalize().multiplyScalar(16);
+  projectiles.push({ mesh, vel, life: 2.2 });
 }
 
 function updateProjectiles(delta){
@@ -709,6 +777,8 @@ function updateProjectiles(delta){
       scene.remove(proj.mesh);
       continue;
     }
+    // áp dụng trọng lực cho mũi tên
+    proj.vel.y -= ARROW_GRAVITY * delta;
     proj.mesh.position.addScaledVector(proj.vel, delta);
 
     // va chạm với thế giới
@@ -727,6 +797,7 @@ function updateProjectiles(delta){
     const dz = proj.mesh.position.z - p.z;
     if(Math.sqrt(dx*dx + dy*dy + dz*dz) < 1.2){
       playerHP = Math.max(0, playerHP - 4);
+      triggerHitOverlay();
       scene.remove(proj.mesh);
       continue;
     }
@@ -859,30 +930,243 @@ function renderHPBar(){
   ui.hpBar.innerHTML = html;
 }
 
+function triggerHitOverlay(){
+  hitOverlayAlpha = 0.5;
+  if(ui.hitOverlay){
+    ui.hitOverlay.style.opacity = String(hitOverlayAlpha);
+  }
+}
+
 function renderInventory(){
-  const canCraftSword = inventory.wood >= 5;
   ui.inventory.innerHTML = `
-    <h3>Túi đồ & Chế tạo</h3>
-    <div class="row"><span>Gỗ</span><span>${inventory.wood}</span></div>
-    <div class="row"><span>Thịt thối</span><span>${inventory.rotten_flesh}</span></div>
-    <div class="row"><span>Kiếm gỗ</span><span>${inventory.wood_sword}</span></div>
-    <button id="craftSwordBtn" ${canCraftSword ? '' : 'disabled'}>
-      Chế tạo kiếm gỗ (5 gỗ)
-    </button>
+    <h3>Túi đồ & Bàn chế tạo 3×3</h3>
+    <div style="margin:0 0 4px;font-size:12px;opacity:0.8;">Kéo thả item giữa túi đồ và lưới chế tạo.</div>
+    <div id="invItems" class="inv-row"></div>
+    <div style="margin:4px 0 4px;font-size:12px;opacity:0.8;">
+      Bàn chế tạo 3×3 (G = Gỗ, F = Thịt thối, K = Kiếm gỗ)
+    </div>
+    <div id="craftGrid" style="display:grid;grid-template-columns:repeat(3,28px);grid-gap:4px;margin-bottom:8px;"></div>
+    <div class="row" style="align-items:center;margin-bottom:6px;">
+      <span>Kết quả:</span>
+      <span id="craftResult" style="min-width:80px;text-align:right;"></span>
+    </div>
+    <button id="craftSwordBtn" disabled>Chế tạo theo mẫu</button>
     <div style="margin-top:8px;font-size:12px;opacity:0.75;">
-      Chuột trái: Đánh quái / phá block<br/>
-      I hoặc nút trên để đóng/mở túi đồ
+      Công thức kiếm gỗ: cột giữa đầy gỗ (3 ô)<br/>
+      Chuột trái: Đánh quái / phá block • I để đóng/mở túi đồ
     </div>
   `;
-  const btn = document.getElementById('craftSwordBtn');
-  if(btn){
-    btn.onclick = () => {
-      if(inventory.wood >= 5){
-        inventory.wood -= 5;
-        inventory.wood_sword += 1;
-        hasWoodSword = true;
+
+  // render túi đồ (inventory)
+  const invEl = document.getElementById('invItems');
+  if(invEl){
+    invEl.innerHTML = '';
+    const items = [
+      { key: 'wood',         label: 'Gỗ' },
+      { key: 'rotten_flesh', label: 'Thịt thối' },
+      { key: 'wood_sword',   label: 'Kiếm gỗ' },
+    ];
+    for(const info of items){
+      const count = inventory[info.key] ?? 0;
+      const slot = document.createElement('div');
+      slot.className = 'inv-slot';
+
+      const itemEl = document.createElement('div');
+      itemEl.className = 'inv-item' + (count === 0 ? ' empty' : '');
+      itemEl.textContent = info.label;
+
+      const countEl = document.createElement('div');
+      countEl.className = 'inv-count';
+      countEl.textContent = String(count);
+
+      if(count > 0){
+        const setupDrag = (el) => {
+          el.draggable = true;
+          el.dataset.item = info.key;
+          el.addEventListener('dragstart', (ev) => {
+            const curCount = inventory[info.key] ?? 0;
+            if(curCount <= 0 || !ev.dataTransfer) return;
+            ev.dataTransfer.effectAllowed = 'move';
+            ev.dataTransfer.setData('text/plain', JSON.stringify({
+              from: 'inv',
+              item: info.key,
+            }));
+          });
+        };
+        // cho phép kéo cả ô lẫn nhãn
+        setupDrag(itemEl);
+        setupDrag(slot);
+      }
+
+      slot.appendChild(itemEl);
+      slot.appendChild(countEl);
+      invEl.appendChild(slot);
+    }
+
+    // nhận item kéo từ lưới chế tạo trả về túi (gán one-shot, tránh nhân nhiều listener)
+    invEl.ondragover = (ev) => {
+      ev.preventDefault();
+      if(ev.dataTransfer) ev.dataTransfer.dropEffect = 'move';
+    };
+    invEl.ondrop = (ev) => {
+      ev.preventDefault();
+      if(!ev.dataTransfer) return;
+      const txt = ev.dataTransfer.getData('text/plain');
+      if(!txt) return;
+      let data;
+      try { data = JSON.parse(txt); } catch { return; }
+      if(data.from === 'craft'){
+        const idx = Number(data.index);
+        if(Number.isNaN(idx)) return;
+        if(!window.craftGrid) return;
+        const keyInGrid = window.craftGrid[idx];
+        if(!keyInGrid) return;
+        window.craftGrid[idx] = null;
+        if(Object.prototype.hasOwnProperty.call(inventory, keyInGrid)){
+          inventory[keyInGrid] += 1;
+        }
         renderInventory();
       }
+    };
+  }
+
+  // khởi tạo lưới 3×3
+  if(typeof window.craftGrid === 'undefined'){
+    window.craftGrid = new Array(9).fill(null);
+  }
+  const gridEl = document.getElementById('craftGrid');
+  gridEl.innerHTML = '';
+  for(let i=0;i<9;i++){
+    const cell = document.createElement('div');
+    cell.dataset.index = String(i);
+    cell.className = 'craft-cell';
+    cell.style.width = '28px';
+    cell.style.height = '28px';
+    cell.style.borderRadius = '4px';
+    cell.style.border = '1px solid rgba(255,255,255,0.3)';
+    cell.style.display = 'flex';
+    cell.style.alignItems = 'center';
+    cell.style.justifyContent = 'center';
+    cell.style.fontSize = '11px';
+    cell.style.cursor = 'pointer';
+    gridEl.appendChild(cell);
+  }
+
+  function renderCraftGrid(){
+    for(let i=0;i<9;i++){
+      const cell = gridEl.querySelector(`div[data-index="${i}"]`);
+      if(!cell) continue;
+      const v = window.craftGrid[i];
+      cell.innerHTML = '';
+      if(!v){
+        cell.style.background = 'transparent';
+        cell.style.borderColor = 'rgba(255,255,255,0.3)';
+      }else{
+        let bg = 'rgba(255,255,255,0.08)';
+        if(v === 'wood') bg = 'rgba(222,184,135,0.45)';          // nâu vàng
+        else if(v === 'rotten_flesh') bg = 'rgba(190,70,70,0.45)'; // đỏ
+        else if(v === 'wood_sword') bg = 'rgba(200,200,200,0.45)'; // xám nhạt
+        cell.style.background = bg;
+        cell.style.borderColor = 'rgba(255,255,255,0.9)';
+      }
+      if(v){
+        const itemEl = document.createElement('div');
+        itemEl.className = 'craft-item';
+        // nhãn ngắn theo loại item
+        let label = '?';
+        let title = v;
+        if(v === 'wood'){ label = 'G'; title = 'Gỗ'; }
+        else if(v === 'rotten_flesh'){ label = 'F'; title = 'Thịt thối'; }
+        else if(v === 'wood_sword'){ label = 'K'; title = 'Kiếm gỗ'; }
+        itemEl.textContent = label;
+        itemEl.title = title;
+        itemEl.draggable = true;
+        itemEl.addEventListener('dragstart', (ev) => {
+          if(!ev.dataTransfer) return;
+          ev.dataTransfer.effectAllowed = 'move';
+          ev.dataTransfer.setData('text/plain', JSON.stringify({
+            from: 'craft',
+            item: v,
+            index: i,
+          }));
+        });
+        cell.appendChild(itemEl);
+      }
+    }
+  }
+
+  function canCraftCurrent(){
+    // recipe kiếm gỗ: cột giữa (1,4,7) đều là 'wood'
+    const g = window.craftGrid;
+    const needWood = (g[1] === 'wood' && g[4] === 'wood' && g[7] === 'wood');
+    return needWood;
+  }
+
+  // click lên lưới: không thay đổi logic, chỉ bỏ trống để tránh xung đột với drag & drop
+  gridEl.onclick = (ev) => {
+    // bỏ qua, tránh double-change khi trình duyệt sinh thêm click sau drop
+  };
+
+  // drag & drop: nhận item kéo từ túi đồ hoặc di chuyển giữa các ô
+  gridEl.ondragover = (ev) => {
+    ev.preventDefault();
+    if(ev.dataTransfer) ev.dataTransfer.dropEffect = 'move';
+  };
+  gridEl.ondrop = (ev) => {
+    ev.preventDefault();
+    if(!ev.dataTransfer) return;
+    const txt = ev.dataTransfer.getData('text/plain');
+    if(!txt) return;
+    let data;
+    try { data = JSON.parse(txt); } catch { return; }
+
+    const target = ev.target;
+    if(!(target instanceof HTMLElement)) return;
+    const cell = target.closest('[data-index]');
+    if(!cell) return;
+    const idx = Number(cell.dataset.index);
+    if(Number.isNaN(idx)) return;
+
+    if(data.from === 'inv'){
+      const itemKey = data.item;
+      if(!Object.prototype.hasOwnProperty.call(inventory, itemKey)) return;
+      if((inventory[itemKey] ?? 0) <= 0) return;
+      if(window.craftGrid[idx]) return;
+      window.craftGrid[idx] = itemKey;
+      inventory[itemKey] -= 1;
+      renderInventory();
+      return;
+    }
+
+    if(data.from === 'craft'){
+      const src = Number(data.index);
+      if(Number.isNaN(src)) return;
+      if(src === idx) return;
+      const srcKey = window.craftGrid[src];
+      if(!srcKey) return;
+      if(window.craftGrid[idx]) return;
+      window.craftGrid[src] = null;
+      window.craftGrid[idx] = srcKey;
+      renderInventory();
+      return;
+    }
+  };
+
+  renderCraftGrid();
+
+  const btn = document.getElementById('craftSwordBtn');
+  const resultEl = document.getElementById('craftResult');
+  if(btn && resultEl){
+    const ok = canCraftCurrent();
+    btn.disabled = !ok;
+    resultEl.textContent = ok ? 'Kiếm gỗ ×1' : '';
+    btn.onclick = () => {
+      if(!canCraftCurrent()) return;
+      inventory.wood_sword += 1;
+      hasWoodSword = true;
+      // xóa mẫu (gỗ đã bị trừ khi đặt, nên chỉ cần clear lưới)
+      window.craftGrid = new Array(9).fill(null);
+      renderInventory();
     };
   }
 }
@@ -892,7 +1176,12 @@ function setInventoryOpen(open){
   const root = document.getElementById('inventory');
   if(!root) return;
   root.style.display = open ? 'flex' : 'none';
-  if(open) renderInventory();
+  if(open){
+    renderInventory();
+    if(controls.isLocked){
+      controls.unlock();
+    }
+  }
 }
 
 if(ui.invBtn){
@@ -1322,11 +1611,15 @@ function tryAttackMob(){
   mob.mesh.position.x += (dx / dist) * knock;
   mob.mesh.position.z += (dz / dist) * knock;
 
+  // feedback nhẹ cho người chơi
+  triggerHitOverlay();
+
   return true;
 }
 
 /* ================== MOUSE ACTION ================== */
 window.addEventListener('mousedown', e => {
+  if(inventoryOpen) return;
   if(!controls.isLocked) return;
   const target = getLookTarget();
 
@@ -1349,6 +1642,7 @@ window.addEventListener('mousedown', e => {
 const moveDir = new THREE.Vector3();
 let jumpHeld = false;
 function updateMovement(delta){
+  if(inventoryOpen) return;
   const feet = playerFeetPos();
 
   moveDir.set(0, 0, 0);
