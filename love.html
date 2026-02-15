@@ -323,7 +323,15 @@
             "💑 Mãi bên nhau em nhé!",
             "🌈 Cuộc đời anh có em là đủ!",
             "🎀 Em là món quà đẹp nhất!",
-            "💒 Yêu em đến trọn đời!"
+            "💒 Yêu em đến trọn đời!",
+            "🦋 Cùng em bay lên mây!",
+            "☁️ Bầu trời có em mới đẹp!",
+            "🎈 Mỗi bước đều hạnh phúc!",
+            "🌺 Vườn hồng chỉ vì em!",
+            "🌷 Em là đóa hoa đẹp nhất!",
+            "🍀 Anh may mắn vì có em!",
+            "⚡ Thử thách nào cũng vượt cùng em!",
+            "🏆 Em là phần thưởng của anh!"
         ];
 
         // Định nghĩa 3 màn chơi
@@ -413,6 +421,111 @@
                     { type: 'cloud', x: 560, y: 288, width: 50, height: 36, startX: 520, endX: 620, speed: -0.35, offset: 0 },
                     { type: 'star', x: 255, y: 268, width: 36, height: 36, angle: 0 },
                     { type: 'star', x: 648, y: 228, width: 36, height: 36, angle: 0 }
+                ]
+            },
+            {
+                name: "Bầu Trời",
+                spawn: { x: 50, y: 520 },
+                platforms: [
+                    { x: 0, y: 560, width: 120, height: 40 },
+                    { x: 160, y: 560, width: 140, height: 40 },
+                    { x: 340, y: 560, width: 120, height: 40 },
+                    { x: 500, y: 560, width: 300, height: 40 },
+                    { x: 80, y: 440, width: 80, height: 20 },
+                    { x: 220, y: 360, width: 90, height: 20 },
+                    { x: 380, y: 440, width: 80, height: 20 },
+                    { x: 520, y: 360, width: 90, height: 20 },
+                    { x: 640, y: 440, width: 80, height: 20 },
+                    { x: 180, y: 270, width: 100, height: 20 },
+                    { x: 360, y: 200, width: 100, height: 20 },
+                    { x: 540, y: 270, width: 100, height: 20 },
+                    { x: 680, y: 180, width: 100, height: 20 },
+                    { x: 400, y: 100, width: 120, height: 20 },
+                    { x: 700, y: 60, width: 80, height: 20 }
+                ],
+                hearts: [
+                    { x: 245, y: 340, width: 24, height: 24, collected: false, messageIndex: 15 },
+                    { x: 555, y: 340, width: 24, height: 24, collected: false, messageIndex: 16 },
+                    { x: 715, y: 160, width: 24, height: 24, collected: false, messageIndex: 17 }
+                ],
+                goal: { x: 730, y: 10, width: 40, height: 50 },
+                obstacles: [
+                    { type: 'cloud', x: 280, y: 320, width: 50, height: 36, startX: 220, endX: 420, speed: 0.5, offset: 0 },
+                    { type: 'cloud', x: 560, y: 250, width: 50, height: 36, startX: 500, endX: 680, speed: -0.45, offset: 0 },
+                    { type: 'star', x: 380, y: 160, width: 36, height: 36, angle: 0 }
+                ]
+            },
+            {
+                name: "Vườn Hồng",
+                spawn: { x: 50, y: 100 },
+                platforms: [
+                    { x: 0, y: 560, width: 100, height: 40 },
+                    { x: 150, y: 560, width: 80, height: 40 },
+                    { x: 280, y: 560, width: 100, height: 40 },
+                    { x: 430, y: 560, width: 80, height: 40 },
+                    { x: 560, y: 560, width: 100, height: 40 },
+                    { x: 710, y: 560, width: 90, height: 40 },
+                    { x: 50, y: 430, width: 70, height: 20 },
+                    { x: 180, y: 350, width: 70, height: 20 },
+                    { x: 310, y: 430, width: 70, height: 20 },
+                    { x: 440, y: 350, width: 70, height: 20 },
+                    { x: 570, y: 430, width: 70, height: 20 },
+                    { x: 200, y: 260, width: 80, height: 20 },
+                    { x: 400, y: 260, width: 80, height: 20 },
+                    { x: 600, y: 260, width: 80, height: 20 },
+                    { x: 350, y: 150, width: 120, height: 20 },
+                    { x: 720, y: 120, width: 60, height: 20 }
+                ],
+                hearts: [
+                    { x: 195, y: 330, width: 24, height: 24, collected: false, messageIndex: 18 },
+                    { x: 455, y: 330, width: 24, height: 24, collected: false, messageIndex: 19 },
+                    { x: 735, y: 100, width: 24, height: 24, collected: false, messageIndex: 20 }
+                ],
+                goal: { x: 735, y: 40, width: 40, height: 60 },
+                obstacles: [
+                    { type: 'flower', x: 120, y: 530, width: 40, height: 50 },
+                    { type: 'flower', x: 250, y: 530, width: 40, height: 50 },
+                    { type: 'flower', x: 400, y: 530, width: 40, height: 50 },
+                    { type: 'flower', x: 530, y: 530, width: 40, height: 50 },
+                    { type: 'flower', x: 320, y: 400, width: 40, height: 50 },
+                    { type: 'flower', x: 480, y: 400, width: 40, height: 50 },
+                    { type: 'dog', x: 620, y: 520, width: 48, height: 40, startX: 560, endX: 760, speed: 2.8, facing: 1 }
+                ]
+            },
+            {
+                name: "Thử Thách",
+                spawn: { x: 50, y: 520 },
+                platforms: [
+                    { x: 0, y: 560, width: 100, height: 40 },
+                    { x: 140, y: 560, width: 100, height: 40 },
+                    { x: 280, y: 560, width: 100, height: 40 },
+                    { x: 420, y: 560, width: 100, height: 40 },
+                    { x: 560, y: 560, width: 100, height: 40 },
+                    { x: 700, y: 560, width: 100, height: 40 },
+                    { x: 70, y: 420, width: 60, height: 20 },
+                    { x: 200, y: 340, width: 70, height: 20 },
+                    { x: 350, y: 420, width: 60, height: 20 },
+                    { x: 480, y: 340, width: 70, height: 20 },
+                    { x: 620, y: 420, width: 60, height: 20 },
+                    { x: 150, y: 250, width: 80, height: 20 },
+                    { x: 350, y: 250, width: 80, height: 20 },
+                    { x: 550, y: 250, width: 80, height: 20 },
+                    { x: 300, y: 130, width: 180, height: 20 },
+                    { x: 720, y: 90, width: 60, height: 20 }
+                ],
+                hearts: [
+                    { x: 215, y: 320, width: 24, height: 24, collected: false, messageIndex: 21 },
+                    { x: 495, y: 320, width: 24, height: 24, collected: false, messageIndex: 22 },
+                    { x: 735, y: 70, width: 24, height: 24, collected: false, messageIndex: 23 }
+                ],
+                goal: { x: 735, y: 20, width: 40, height: 60 },
+                obstacles: [
+                    { type: 'cloud', x: 260, y: 300, width: 50, height: 36, startX: 200, endX: 400, speed: 0.55, offset: 0 },
+                    { type: 'cloud', x: 500, y: 300, width: 50, height: 36, startX: 440, endX: 620, speed: -0.5, offset: 0 },
+                    { type: 'star', x: 180, y: 210, width: 36, height: 36, angle: 0 },
+                    { type: 'star', x: 570, y: 210, width: 36, height: 36, angle: 0 },
+                    { type: 'dog', x: 320, y: 520, width: 48, height: 40, startX: 280, endX: 480, speed: 2.6, facing: 1 },
+                    { type: 'horse', x: 140, y: 518, width: 56, height: 48 }
                 ]
             },
             {
@@ -518,6 +631,10 @@
         let levelIntroUntil = 0;
         let screenShake = 0;
         const SHAKE_DURATION = 20;
+        let wasOnGround = false;
+        let lastHeartCollectTime = 0;
+        let heartCombo = 0;
+        let bonusText = null;
 
         // Audio (Web Audio API - không cần file)
         let audioCtx = null;
@@ -533,7 +650,8 @@
                 const gain = ctx.createGain();
                 osc.connect(gain);
                 gain.connect(ctx.destination);
-                osc.frequency.value = freq;
+                const pitchVariation = 0.98 + Math.random() * 0.04;
+                osc.frequency.value = freq * pitchVariation;
                 osc.type = type || 'sine';
                 gain.gain.setValueAtTime(volume || 0.12, ctx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
@@ -589,6 +707,9 @@
             invincibleUntil = Date.now() + INVINCIBLE_DURATION;
             levelIntroUntil = Date.now() + 2200;
             canDoubleJump = false;
+            wasOnGround = true;
+            heartCombo = 0;
+            bonusText = null;
             document.getElementById('hearts').textContent = `0/${totalHeartsLevel}`;
             document.getElementById('levelName').textContent = level.name + ' 💕';
         }
@@ -770,12 +891,26 @@
                     player.y + player.height > platform.y &&
                     player.y + player.height < platform.y + platform.height &&
                     player.speedY > 0) {
+                    const justLanded = !wasOnGround;
                     player.y = platform.y - player.height;
                     player.speedY = 0;
                     player.onGround = true;
                     canDoubleJump = true;
+                    if (justLanded) {
+                        for (let i = 0; i < 6; i++) {
+                            particles.push({
+                                x: player.x + player.width / 2 + (Math.random() - 0.5) * 20,
+                                y: player.y + player.height,
+                                vx: (Math.random() - 0.5) * 2,
+                                vy: Math.random() * 1.5,
+                                life: 25,
+                                color: 'rgba(139, 69, 19, 0.6)'
+                            });
+                        }
+                    }
                 }
             });
+            wasOnGround = player.onGround;
 
             if (player.x < 0) player.x = 0;
             if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
@@ -832,10 +967,25 @@
                     player.y < heart.y + heart.height) {
                     heart.collected = true;
                     heartsCollected++;
+                    const now = Date.now();
+                    if (now - lastHeartCollectTime < 2500) heartCombo++; else heartCombo = 1;
+                    lastHeartCollectTime = now;
                     document.getElementById('hearts').textContent = `${heartsCollected}/${totalHeartsLevel}`;
                     showMessage(loveMessages[heart.messageIndex]);
                     createParticles(heart.x + heart.width / 2, heart.y + heart.height / 2, '#ff1493');
+                    for (let i = 0; i < 5; i++) {
+                        particles.push({
+                            x: heart.x + heart.width / 2,
+                            y: heart.y + heart.height / 2,
+                            vx: (Math.random() - 0.5) * 4,
+                            vy: -2 - Math.random() * 3,
+                            life: 40,
+                            color: ['#ff69b4', '#ffd700', '#fff'][i % 3]
+                        });
+                    }
                     playCollectHeart();
+                    bonusText = { text: ['Nice!', 'Yay!', 'Wow!', '💕', 'Tuyệt!'][Math.floor(Math.random() * 5)], x: heart.x + heart.width / 2, y: heart.y - 15, until: now + 700 };
+                    if (heartCombo >= 2) bonusText = { text: 'Combo x' + heartCombo + '! 💕', x: heart.x + heart.width / 2, y: heart.y - 25, until: now + 900 };
                 }
             });
 
@@ -847,6 +997,11 @@
                 if (currentLevel < LEVELS.length - 1) {
                     levelTransitioning = true;
                     playLevelComplete();
+                    for (let i = 0; i < 25; i++) {
+                        setTimeout(() => {
+                            createParticles(goal.x + goal.width / 2 + (Math.random() - 0.5) * 60, goal.y + goal.height / 2, ['#ffd700', '#ff69b4', '#fff', '#ff1493'][i % 4]);
+                        }, i * 25);
+                    }
                     showMessage('🎉 Màn tiếp theo! 💕');
                     setTimeout(() => {
                         loadLevel(currentLevel + 1);
@@ -1098,7 +1253,8 @@
         function drawPlayer() {
             if (Date.now() < invincibleUntil && Math.floor(Date.now() / 80) % 2 === 0) return; // Nhấp nháy khi bất tử
             ctx.save();
-            ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
+            const idleBounce = (player.onGround && Math.abs(player.speedX) < 0.5) ? Math.sin(Date.now() * 0.004) * 2 : 0;
+            ctx.translate(player.x + player.width / 2, player.y + player.height / 2 + idleBounce);
             if (player.facing === -1) ctx.scale(-1, 1);
             
             ctx.fillStyle = '#4CAF50';
@@ -1299,6 +1455,18 @@
             drawPlayer();
             updateParticles();
             drawParticles();
+            if (bonusText && Date.now() < bonusText.until) {
+                const alpha = Math.min(1, (bonusText.until - Date.now()) / 300);
+                ctx.save();
+                ctx.font = 'bold 22px "Segoe UI", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = `rgba(233, 30, 99, ${alpha})`;
+                ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+                ctx.lineWidth = 2;
+                ctx.strokeText(bonusText.text, bonusText.x, bonusText.y);
+                ctx.fillText(bonusText.text, bonusText.x, bonusText.y);
+                ctx.restore();
+            } else if (bonusText) bonusText = null;
 
             // Update
             updateObstacles();
