@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💝 Tặng Em Yêu 💝</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #ui {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        #score {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 30px;
+            border-radius: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #e91e63;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        #message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.98);
+            padding: 40px 60px;
+            border-radius: 30px;
+            font-size: 32px;
+            font-weight: bold;
+            color: #e91e63;
+            text-align: center;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.5);
+            opacity: 0;
+            transition: all 0.5s ease;
+            max-width: 85%;
+            line-height: 1.8;
+            z-index: 500;
+            pointer-events: none;
+            border: 3px solid rgba(255, 20, 147, 0.3);
+        }
+
+        #message.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-size: 16px;
+            color: #333;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+        }
+
+        #startScreen h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: pulse 2s infinite;
+        }
+
+        #startScreen p {
+            font-size: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+            max-width: 600px;
+            line-height: 1.6;
+        }
+
+        #startButton {
+            padding: 20px 50px;
+            font-size: 24px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.3s, box-shadow 0.3s;
+            pointer-events: all;
+            font-weight: bold;
+        }
+
+        #startButton:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        #completion {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+        }
+
+        #completion.show {
+            display: flex;
+        }
+
+        #completion h1 {
+            font-size: 56px;
+            margin-bottom: 30px;
+            text-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: pulse 2s infinite;
+        }
+
+        #completion p {
+            font-size: 24px;
+            text-align: center;
+            max-width: 700px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        /* Mobile Controls */
+        #mobileControls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 250px;
+            pointer-events: none;
+            z-index: 200;
+            display: none;
+        }
+
+        #mobileControls.show {
+            display: block;
+        }
+
+        #joystick {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            width: 150px;
+            height: 150px;
+            pointer-events: all;
+        }
+
+        #joystickBase {
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        #joystickStick {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.7);
+            border: 3px solid rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            position: absolute;
+            left: 45px;
+            top: 45px;
+            transition: all 0.1s;
+        }
+
+        #actionButtons {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            pointer-events: all;
+        }
+
+        .actionBtn {
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.5);
+            border: 3px solid rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            margin: 10px;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            touch-action: none;
+            user-select: none;
+        }
+
+        .actionBtn:active {
+            background: rgba(255, 255, 255, 0.8);
+            transform: scale(0.95);
+        }
+
+        #upBtn {
+            position: absolute;
+            right: 0;
+            bottom: 90px;
+        }
+
+        #downBtn {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            #score {
+                top: 10px;
+                right: 10px;
+                padding: 10px 20px;
+                font-size: 18px;
+            }
+
+            #message {
+                font-size: 20px;
+                padding: 20px 30px;
+            }
+
+            #instructions {
+                display: none;
+            }
+
+            #startScreen h1 {
+                font-size: 36px;
+            }
+
+            #startScreen p {
+                font-size: 16px;
+                padding: 0 20px;
+            }
+
+            #startButton {
+                padding: 15px 40px;
+                font-size: 20px;
+            }
+        }
+
+        #hint {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-size: 18px;
+            color: #e91e63;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+        }
+
+        #hint.show {
+            opacity: 1;
+        }
+
+        #directionArrow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 60px;
+            color: rgba(255, 20, 147, 0.7);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            text-shadow: 0 0 20px rgba(255, 20, 147, 0.8);
+        }
+
+        #directionArrow.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="startScreen">
+        <h1>💝 Dành Tặng Em Yêu 💝</h1>
+        <p id="startDescription">
+            Anh đã tạo ra thế giới 3D này dành riêng cho em.<br>
+            Hãy bay trong không gian và thu thập tất cả những trái tim,<br>
+            mỗi trái tim đều chứa một lời nhắn từ trái tim anh. 💕
+        </p>
+        <button id="startButton">Bắt Đầu Khám Phá 💖</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="ui">
+        <div id="score">❤️ Trái Tim: 0/10</div>
+        <div id="hint"></div>
+        <div id="directionArrow"></div>
+        <div id="message"></div>
+        <div id="instructions">
+            🎮 Di chuyển: W/A/S/D hoặc ↑/←/↓/→ | 🖱️ Xoay: Chuót | 🚀 Bay lên/xuống: Space/Shift
+        </div>
+    </div>
+
+    <div id="mobileControls">
+        <div id="joystick">
+            <div id="joystickBase"></div>
+            <div id="joystickStick"></div>
+        </div>
+        <div id="actionButtons">
+            <div id="upBtn" class="actionBtn">↑</div>
+            <div id="downBtn" class="actionBtn">↓</div>
+        </div>
+    </div>
+
+    <div id="completion">
+        <h1>💕 Em Đã Thu Thập Đủ Tất Cả! 💕</h1>
+        <p>
+            Anh yêu em nhiều lắm! ❤️<br>
+            Em là ánh sáng trong cuộc đời anh,<br>
+            là lý do anh mỉm cười mỗi ngày.<br>
+            Cảm ơn em đã đến bên anh! 🌹<br><br>
+            <strong>I Love You Forever! 💖</strong>
+        </p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Game variables
+        let scene, camera, renderer;
+        let hearts = [];
+        let particles = [];
+        let score = 0;
+        const totalHearts = 10;
+        let gameStarted = false;
+
+        // Device detection
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                        ('ontouchstart' in window) || 
+                        (window.innerWidth <= 768);
+
+        // Movement variables
+        const movement = {
+            forward: false,
+            backward: false,
+            left: false,
+            right: false,
+            up: false,
+            down: false
+        };
+
+        const velocity = new THREE.Vector3();
+        const moveSpeed = isMobile ? 0.2 : 0.3; // Chậm hơn trên mobile
+        const rotateSpeed = isMobile ? 0.003 : 0.002;
+
+        // Mouse movement
+        let mouseX = 0, mouseY = 0;
+        let targetRotationX = 0, targetRotationY = 0;
+
+        // Mobile controls
+        let joystickActive = false;
+        let joystickStart = { x: 0, y: 0 };
+        let joystickCurrent = { x: 0, y: 0 };
+        let touchStartX = 0, touchStartY = 0;
+
+        // Hint system
+        let nearestHeart = null;
+        let lastHintTime = 0;
+
+        // Love messages
+        const loveMessages = [
+            "💕 Anh yêu em nhiều lắm!",
+            "🌹 Em là điều tuyệt vời nhất trong đời anh!",
+            "✨ Mỗi ngày bên em đều là một món quà!",
+            "💖 Em làm cuộc sống anh ý nghĩa hơn!",
+            "🌟 Anh muốn được ở bên em mãi mãi!",
+            "💝 Em là tình yêu của đời anh!",
+            "🎀 Cảm ơn em đã đến bên anh!",
+            "💫 Em xinh đẹp nhất trần đời!",
+            "🌸 Anh hạnh phúc vì có em!",
+            "💗 Yêu em 3000! I Love You Forever!"
+        ];
+
+        // Initialize game
+        function init() {
+            // Update instructions based on device
+            if (isMobile) {
+                document.getElementById('startDescription').innerHTML = 
+                    'Anh đã tạo ra thế giới 3D này dành riêng cho em.<br>' +
+                    'Dùng joystick để di chuyển, chạm màn hình để nhìn xung quanh,<br>' +
+                    'và thu thập tất cả những trái tim chứa lời nhắn yêu thương! 💕';
+            }
+
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87ceeb);
+            scene.fog = new THREE.Fog(0x87ceeb, 10, 100);
+
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 2, 10);
+
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ 
+                canvas: document.getElementById('gameCanvas'),
+                antialias: true 
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 20, 10);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+
+            // Add point lights for atmosphere
+            const pointLight1 = new THREE.PointLight(0xff69b4, 1, 50);
+            pointLight1.position.set(-10, 5, -10);
+            scene.add(pointLight1);
+
+            const pointLight2 = new THREE.PointLight(0xff1493, 1, 50);
+            pointLight2.position.set(10, 5, 10);
+            scene.add(pointLight2);
+
+            // Create ground
+            const groundGeometry = new THREE.PlaneGeometry(100, 100);
+            const groundMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x90ee90,
+                roughness: 0.8
+            });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = -2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            // Create hearts
+            for (let i = 0; i < totalHearts; i++) {
+                createHeart(i);
+            }
+
+            // Create floating particles
+            createParticles();
+
+            // Create sky box with gradient
+            createSkybox();
+
+            // Event listeners
+            document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('keyup', onKeyUp);
+            document.addEventListener('mousemove', onMouseMove);
+            document.getElementById('startButton').addEventListener('click', startGame);
+
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function createHeart(index) {
+            const heartShape = new THREE.Shape();
+            const x = 0, y = 0;
+            heartShape.moveTo(x + 0.5, y + 0.5);
+            heartShape.bezierCurveTo(x + 0.5, y + 0.5, x + 0.4, y, x, y);
+            heartShape.bezierCurveTo(x - 0.6, y, x - 0.6, y + 0.7, x - 0.6, y + 0.7);
+            heartShape.bezierCurveTo(x - 0.6, y + 1.1, x - 0.3, y + 1.54, x + 0.5, y + 1.9);
+            heartShape.bezierCurveTo(x + 1.2, y + 1.54, x + 1.6, y + 1.1, x + 1.6, y + 0.7);
+            heartShape.bezierCurveTo(x + 1.6, y + 0.7, x + 1.6, y, x + 1.0, y);
+            heartShape.bezierCurveTo(x + 0.7, y, x + 0.5, y + 0.5, x + 0.5, y + 0.5);
+
+            const extrudeSettings = {
+                depth: 0.3,
+                bevelEnabled: true,
+                bevelSegments: 2,
+                steps: 2,
+                bevelSize: 0.1,
+                bevelThickness: 0.1
+            };
+
+            const geometry = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
+            const material = new THREE.MeshStandardMaterial({ 
+                color: 0xff1493,
+                emissive: 0xff1493,
+                emissiveIntensity: 0.8, // Sáng hơn
+                metalness: 0.3,
+                roughness: 0.1
+            });
+
+            const heart = new THREE.Mesh(geometry, material);
+            
+            // Xoay trái tim để đỉnh hướng xuống dưới (đúng hướng)
+            heart.rotation.z = Math.PI; // Xoay 180 độ
+            
+            // Thêm ánh sáng điểm vào mỗi trái tim để dễ thấy hơn
+            const heartLight = new THREE.PointLight(0xff1493, 2, 10);
+            heartLight.position.copy(heart.position);
+            scene.add(heartLight);
+            heart.userData.light = heartLight;
+            
+            // Random position
+            const angle = (index / totalHearts) * Math.PI * 2;
+            const radius = 15 + Math.random() * 10;
+            heart.position.x = Math.cos(angle) * radius;
+            heart.position.y = 2 + Math.random() * 8;
+            heart.position.z = Math.sin(angle) * radius;
+            
+            heart.scale.set(0.3, 0.3, 0.3);
+            heart.castShadow = true;
+            heart.userData.collected = false;
+            heart.userData.initialY = heart.position.y;
+            heart.userData.rotationSpeed = 0.02 + Math.random() * 0.02;
+            heart.userData.floatSpeed = 0.5 + Math.random() * 0.5;
+
+            scene.add(heart);
+            hearts.push(heart);
+        }
+
+        function createParticles() {
+            const particleCount = 200;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+
+            for (let i = 0; i < particleCount * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 100;
+                positions[i + 1] = Math.random() * 50;
+                positions[i + 2] = (Math.random() - 0.5) * 100;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const material = new THREE.PointsMaterial({
+                color: 0xffc0cb,
+                size: 0.3,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            const particleSystem = new THREE.Points(geometry, material);
+            scene.add(particleSystem);
+            particles.push(particleSystem);
+        }
+
+        function createSkybox() {
+            // Add some clouds
+            for (let i = 0; i < 20; i++) {
+                const cloudGeometry = new THREE.SphereGeometry(3, 8, 8);
+                const cloudMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 0.6
+                });
+                const cloud = new THREE.Mesh(cloudGeometry, cloudMaterial);
+                cloud.position.set(
+                    (Math.random() - 0.5) * 100,
+                    15 + Math.random() * 20,
+                    (Math.random() - 0.5) * 100
+                );
+                cloud.scale.set(1 + Math.random(), 0.5, 1 + Math.random());
+                scene.add(cloud);
+            }
+        }
+
+        function startGame() {
+            gameStarted = true;
+            document.getElementById('startScreen').style.display = 'none';
+            
+            if (isMobile) {
+                // Show mobile controls
+                document.getElementById('mobileControls').classList.add('show');
+                setupMobileControls();
+            } else {
+                // Request pointer lock for PC
+                document.getElementById('gameCanvas').requestPointerLock();
+            }
+            
+            animate();
+        }
+
+        function onKeyDown(event) {
+            if (!gameStarted) return;
+            
+            switch(event.code) {
+                case 'KeyW':
+                case 'ArrowUp':
+                    movement.forward = true;
+                    break;
+                case 'KeyS':
+                case 'ArrowDown':
+                    movement.backward = true;
+                    break;
+                case 'KeyA':
+                case 'ArrowLeft':
+                    movement.left = true;
+                    break;
+                case 'KeyD':
+                case 'ArrowRight':
+                    movement.right = true;
+                    break;
+                case 'Space':
+                    movement.up = true;
+                    break;
+                case 'ShiftLeft':
+                case 'ShiftRight':
+                    movement.down = true;
+                    break;
+            }
+        }
+
+        function onKeyUp(event) {
+            switch(event.code) {
+                case 'KeyW':
+                case 'ArrowUp':
+                    movement.forward = false;
+                    break;
+                case 'KeyS':
+                case 'ArrowDown':
+                    movement.backward = false;
+                    break;
+                case 'KeyA':
+                case 'ArrowLeft':
+                    movement.left = false;
+                    break;
+                case 'KeyD':
+                case 'ArrowRight':
+                    movement.right = false;
+                    break;
+                case 'Space':
+                    movement.up = false;
+                    break;
+                case 'ShiftLeft':
+                case 'ShiftRight':
+                    movement.down = false;
+                    break;
+            }
+        }
+
+        function onMouseMove(event) {
+            if (isMobile) return; // Disable mouse on mobile
+            if (!gameStarted || document.pointerLockElement !== document.getElementById('gameCanvas')) return;
+            
+            mouseX = event.movementX || 0;
+            mouseY = event.movementY || 0;
+            
+            targetRotationY -= mouseX * rotateSpeed;
+            targetRotationX -= mouseY * rotateSpeed;
+            targetRotationX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, targetRotationX));
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function setupMobileControls() {
+            const joystickBase = document.getElementById('joystick');
+            const joystickStick = document.getElementById('joystickStick');
+            const canvas = document.getElementById('gameCanvas');
+
+            // Joystick controls
+            joystickBase.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                joystickActive = true;
+                const touch = e.touches[0];
+                const rect = joystickBase.getBoundingClientRect();
+                joystickStart.x = rect.left + rect.width / 2;
+                joystickStart.y = rect.top + rect.height / 2;
+            });
+
+            joystickBase.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!joystickActive) return;
+
+                const touch = e.touches[0];
+                const deltaX = touch.clientX - joystickStart.x;
+                const deltaY = touch.clientY - joystickStart.y;
+                
+                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                const maxDistance = 45;
+                
+                if (distance > maxDistance) {
+                    const angle = Math.atan2(deltaY, deltaX);
+                    joystickCurrent.x = Math.cos(angle) * maxDistance;
+                    joystickCurrent.y = Math.sin(angle) * maxDistance;
+                } else {
+                    joystickCurrent.x = deltaX;
+                    joystickCurrent.y = deltaY;
+                }
+
+                joystickStick.style.transform = `translate(${joystickCurrent.x}px, ${joystickCurrent.y}px)`;
+
+                // Update movement based on joystick
+                const threshold = 10;
+                movement.forward = joystickCurrent.y < -threshold;
+                movement.backward = joystickCurrent.y > threshold;
+                movement.left = joystickCurrent.x < -threshold;
+                movement.right = joystickCurrent.x > threshold;
+            });
+
+            joystickBase.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                joystickActive = false;
+                joystickCurrent.x = 0;
+                joystickCurrent.y = 0;
+                joystickStick.style.transform = 'translate(0, 0)';
+                movement.forward = false;
+                movement.backward = false;
+                movement.left = false;
+                movement.right = false;
+            });
+
+            // Up/Down buttons
+            const upBtn = document.getElementById('upBtn');
+            const downBtn = document.getElementById('downBtn');
+
+            upBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                movement.up = true;
+            });
+
+            upBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                movement.up = false;
+            });
+
+            downBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                movement.down = true;
+            });
+
+            downBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                movement.down = false;
+            });
+
+            // Touch camera rotation for mobile
+            canvas.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                }
+            });
+
+            canvas.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1) {
+                    const touch = e.touches[0];
+                    const deltaX = touch.clientX - touchStartX;
+                    const deltaY = touch.clientY - touchStartY;
+
+                    targetRotationY -= deltaX * rotateSpeed * 0.5;
+                    targetRotationX -= deltaY * rotateSpeed * 0.5;
+                    targetRotationX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, targetRotationX));
+
+                    touchStartX = touch.clientX;
+                    touchStartY = touch.clientY;
+                }
+            });
+        }
+
+        function updateMovement() {
+            velocity.x = 0;
+            velocity.y = 0;
+            velocity.z = 0;
+
+            if (movement.forward) velocity.z -= moveSpeed;
+            if (movement.backward) velocity.z += moveSpeed;
+            if (movement.left) velocity.x -= moveSpeed;
+            if (movement.right) velocity.x += moveSpeed;
+            if (movement.up) velocity.y += moveSpeed;
+            if (movement.down) velocity.y -= moveSpeed;
+
+            // Apply rotation to camera
+            camera.rotation.y = targetRotationY;
+            camera.rotation.x = targetRotationX;
+
+            // Move camera based on its rotation
+            const direction = new THREE.Vector3();
+            camera.getWorldDirection(direction);
+            
+            const right = new THREE.Vector3();
+            right.crossVectors(camera.up, direction).normalize();
+
+            camera.position.addScaledVector(direction, -velocity.z);
+            camera.position.addScaledVector(right, -velocity.x);
+            camera.position.y += velocity.y;
+
+            // Keep camera above ground
+            if (camera.position.y < 0) camera.position.y = 0;
+        }
+
+        function checkHeartCollision() {
+            const collisionDistance = isMobile ? 4 : 3; // Dễ hơn trên mobile
+            let minDistance = Infinity;
+            nearestHeart = null;
+
+            hearts.forEach((heart, index) => {
+                if (heart.userData.collected) return;
+
+                const distance = camera.position.distanceTo(heart.position);
+                
+                // Track nearest heart for hint
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestHeart = heart;
+                }
+
+                // Check collision
+                if (distance < collisionDistance) {
+                    heart.userData.collected = true;
+                    score++;
+                    
+                    // Update score display
+                    document.getElementById('score').textContent = `❤️ Trái Tim: ${score}/${totalHearts}`;
+                    
+                    // Show message
+                    showMessage(loveMessages[index]);
+                    
+                    // Remove heart with animation
+                    animateHeartCollection(heart);
+                    
+                    // Check if all hearts collected
+                    if (score === totalHearts) {
+                        setTimeout(() => {
+                            document.getElementById('completion').classList.add('show');
+                        }, 2000);
+                    }
+                }
+            });
+
+            // Show hint to nearest heart
+            updateHint(minDistance);
+        }
+
+        function updateHint(distance) {
+            const hintEl = document.getElementById('hint');
+            const arrowEl = document.getElementById('directionArrow');
+            const now = Date.now();
+
+            if (distance < 20 && nearestHeart) {
+                const direction = new THREE.Vector3();
+                direction.subVectors(nearestHeart.position, camera.position);
+                direction.y = 0; // Ignore vertical distance
+                
+                const cameraDir = new THREE.Vector3();
+                camera.getWorldDirection(cameraDir);
+                cameraDir.y = 0;
+                cameraDir.normalize();
+                direction.normalize();
+
+                const angle = Math.atan2(
+                    direction.z * cameraDir.x - direction.x * cameraDir.z,
+                    direction.x * cameraDir.x + direction.z * cameraDir.z
+                );
+
+                // Show arrow if heart is not directly visible
+                if (Math.abs(angle) > Math.PI / 6) { // More than 30 degrees off center
+                    let arrow = '';
+                    if (Math.abs(angle) < Math.PI / 4) {
+                        arrow = '↑';
+                    } else if (angle > Math.PI * 3 / 4 || angle < -Math.PI * 3 / 4) {
+                        arrow = '↓';
+                    } else if (angle > 0) {
+                        arrow = '←';
+                    } else {
+                        arrow = '→';
+                    }
+                    arrowEl.textContent = arrow;
+                    arrowEl.classList.add('show');
+                } else {
+                    arrowEl.classList.remove('show');
+                }
+
+                // Text hint
+                if (now - lastHintTime > 3000) { // Show hint every 3 seconds
+                    let directionText = '';
+                    if (Math.abs(angle) < Math.PI / 4) {
+                        directionText = 'Phía trước';
+                    } else if (angle > Math.PI * 3 / 4 || angle < -Math.PI * 3 / 4) {
+                        directionText = 'Phía sau';
+                    } else if (angle > 0) {
+                        directionText = 'Bên trái';
+                    } else {
+                        directionText = 'Bên phải';
+                    }
+
+                    const verticalHint = nearestHeart.position.y - camera.position.y;
+                    if (Math.abs(verticalHint) > 2) {
+                        directionText += verticalHint > 0 ? ' - Bay lên ↑' : ' - Bay xuống ↓';
+                    }
+
+                    hintEl.textContent = `💝 ${directionText} (${Math.round(distance)}m)`;
+                    hintEl.classList.add('show');
+                    lastHintTime = now;
+
+                    setTimeout(() => {
+                        hintEl.classList.remove('show');
+                    }, 2500);
+                }
+            } else {
+                arrowEl.classList.remove('show');
+            }
+        }
+
+        function animateHeartCollection(heart) {
+            const startScale = heart.scale.clone();
+            const duration = 500;
+            const startTime = Date.now();
+
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = elapsed / duration;
+
+                if (progress < 1) {
+                    heart.scale.lerpVectors(startScale, new THREE.Vector3(0, 0, 0), progress);
+                    heart.rotation.y += 0.1;
+                    
+                    // Fade out light
+                    if (heart.userData.light) {
+                        heart.userData.light.intensity = 2 * (1 - progress);
+                    }
+                    
+                    requestAnimationFrame(animate);
+                } else {
+                    scene.remove(heart);
+                    // Remove light
+                    if (heart.userData.light) {
+                        scene.remove(heart.userData.light);
+                    }
+                }
+            }
+            animate();
+        }
+
+        function showMessage(text) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.classList.add('show');
+            
+            setTimeout(() => {
+                messageEl.classList.remove('show');
+            }, 3000);
+        }
+
+        function animate() {
+            if (!gameStarted) return;
+            
+            requestAnimationFrame(animate);
+
+            // Update movement
+            updateMovement();
+
+            // Animate hearts
+            hearts.forEach((heart, index) => {
+                if (!heart.userData.collected) {
+                    heart.rotation.y += heart.userData.rotationSpeed;
+                    heart.position.y = heart.userData.initialY + 
+                        Math.sin(Date.now() * 0.001 * heart.userData.floatSpeed) * 0.5;
+                    
+                    // Pulsing effect
+                    const pulse = 1 + Math.sin(Date.now() * 0.003) * 0.15;
+                    heart.scale.set(0.3 * pulse, 0.3 * pulse, 0.3 * pulse);
+                    
+                    // Update light position
+                    if (heart.userData.light) {
+                        heart.userData.light.position.copy(heart.position);
+                        // Pulsing light intensity
+                        heart.userData.light.intensity = 2 + Math.sin(Date.now() * 0.002) * 0.5;
+                    }
+                }
+            });
+
+            // Animate particles
+            particles.forEach(particleSystem => {
+                particleSystem.rotation.y += 0.0005;
+            });
+
+            // Check collisions
+            checkHeartCollision();
+
+            // Render scene
+            renderer.render(scene, camera);
+        }
+
+        // Initialize game on load
+        init();
+    </script>
+</body>
+</html
