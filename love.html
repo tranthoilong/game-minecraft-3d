@@ -103,6 +103,35 @@
             display: none;
         }
 
+        #levelIntro {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(102, 126, 234, 0.7);
+            border-radius: 10px;
+            z-index: 90;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        #levelIntro.show {
+            opacity: 1;
+        }
+        #levelIntro .intro-text {
+            font-size: 36px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            padding: 20px 50px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.2);
+        }
+
         .screen-title {
             font-size: 42px;
             margin-bottom: 20px;
@@ -195,7 +224,7 @@
             </div>
             <button class="screen-button" onclick="startGame()">Bắt Đầu Phiêu Lưu 💖</button>
             <div class="controls">
-                🎮 Di chuyển: ← → hoặc A D | Nhảy: ↑ hoặc W hoặc Space
+                🎮 Di chuyển: ← → hoặc A D | Nhảy: ↑ W Space (nhảy 2 lần trên không)
             </div>
         </div>
 
@@ -204,11 +233,12 @@
             <div class="screen-text">
                 Em đã hoàn thành cuộc phiêu lưu!<br>
                 Anh yêu em rất nhiều! ❤️<br>
-                Chúc mừng kỷ niệm ngày quen nhau của chúng mình!<br>
+                Thời gian: <span id="winTime">0</span>s &nbsp;|&nbsp; Kỷ lục: <span id="winBest">0</span>s<br>
                 Yêu em 3000! 💕
             </div>
             <button class="screen-button" onclick="location.reload()">Chơi Lại 🔄</button>
         </div>
+        <div id="levelIntro"></div>
     </div>
 
     <script>
@@ -350,6 +380,62 @@
         };
 
         const keys = { left: false, right: false, jump: false };
+        let canDoubleJump = false;
+        let levelIntroUntil = 0;
+        let screenShake = 0;
+        const SHAKE_DURATION = 20;
+
+        // Audio (Web Audio API - không cần file)
+        let audioCtx = null;
+        function getAudioContext() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            return audioCtx;
+        }
+        function playTone(freq, duration, type, volume) {
+            try {
+                const ctx = getAudioContext();
+                if (ctx.state === 'suspended') ctx.resume();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = freq;
+                osc.type = type || 'sine';
+                gain.gain.setValueAtTime(volume || 0.12, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + duration);
+            } catch (_) {}
+        }
+        function playJump() {
+            playTone(520, 0.08, 'sine', 0.08);
+            setTimeout(() => playTone(680, 0.06, 'sine', 0.06), 40);
+        }
+        function playDoubleJump() {
+            playTone(400, 0.05, 'sine', 0.06);
+            setTimeout(() => playTone(600, 0.07, 'sine', 0.07), 30);
+        }
+        function playCollectHeart() {
+            playTone(523, 0.06, 'sine', 0.08);
+            setTimeout(() => playTone(659, 0.06, 'sine', 0.07), 50);
+            setTimeout(() => playTone(784, 0.12, 'sine', 0.08), 100);
+        }
+        function playHit() {
+            playTone(150, 0.15, 'sawtooth', 0.1);
+            setTimeout(() => playTone(100, 0.2, 'sawtooth', 0.08), 80);
+        }
+        function playLevelComplete() {
+            playTone(523, 0.12, 'sine', 0.1);
+            setTimeout(() => playTone(659, 0.12, 'sine', 0.09), 120);
+            setTimeout(() => playTone(784, 0.12, 'sine', 0.09), 240);
+            setTimeout(() => playTone(1047, 0.2, 'sine', 0.1), 360);
+        }
+        function playWin() {
+            const notes = [523, 659, 784, 1047, 784, 1047];
+            notes.forEach((freq, i) => {
+                setTimeout(() => playTone(freq, 0.25, 'sine', 0.1), i * 180);
+            });
+        }
 
         function loadLevel(index) {
             const level = LEVELS[index];
@@ -367,6 +453,8 @@
             player.speedX = 0;
             player.speedY = 0;
             invincibleUntil = Date.now() + INVINCIBLE_DURATION;
+            levelIntroUntil = Date.now() + 2200;
+            canDoubleJump = false;
             document.getElementById('hearts').textContent = `0/${totalHeartsLevel}`;
             document.getElementById('levelName').textContent = level.name + ' 💕';
         }
@@ -434,6 +522,7 @@
         });
 
         function startGame() {
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
             gameStarted = true;
             document.getElementById('startScreen').style.display = 'none';
             lastTime = Date.now();
@@ -469,6 +558,12 @@
             if (keys.jump && player.onGround) {
                 player.speedY = player.jumpPower;
                 player.onGround = false;
+                canDoubleJump = true;
+                playJump();
+            } else if (keys.jump && canDoubleJump && player.speedY > -8) {
+                player.speedY = player.jumpPower * 0.85;
+                canDoubleJump = false;
+                playDoubleJump();
             }
 
             player.speedY += player.gravity;
@@ -485,6 +580,7 @@
                     player.y = platform.y - player.height;
                     player.speedY = 0;
                     player.onGround = true;
+                    canDoubleJump = true;
                 }
             });
 
@@ -492,6 +588,7 @@
             if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
             
             if (player.y > canvas.height) {
+                playHit();
                 respawn();
             }
         }
@@ -525,6 +622,8 @@
                     if (px + pw > obs.x && px < obs.x + obs.width && py + ph > obs.y && py < obs.y + obs.height) hit = true;
                 }
                 if (hit) {
+                    screenShake = SHAKE_DURATION;
+                    playHit();
                     respawn();
                     createParticles(player.x + player.width / 2, player.y + player.height / 2, '#ff9999');
                 }
@@ -543,6 +642,7 @@
                     document.getElementById('hearts').textContent = `${heartsCollected}/${totalHeartsLevel}`;
                     showMessage(loveMessages[heart.messageIndex]);
                     createParticles(heart.x + heart.width / 2, heart.y + heart.height / 2, '#ff1493');
+                    playCollectHeart();
                 }
             });
 
@@ -553,11 +653,13 @@
                 player.y < goal.y + goal.height) {
                 if (currentLevel < LEVELS.length - 1) {
                     levelTransitioning = true;
+                    playLevelComplete();
                     showMessage('🎉 Màn tiếp theo! 💕');
                     setTimeout(() => {
                         loadLevel(currentLevel + 1);
                     }, 1800);
                 } else {
+                    playWin();
                     winGame();
                 }
             }
@@ -575,8 +677,21 @@
 
         function winGame() {
             gameStarted = false;
+            const bestKey = 'loveAdventureBestTime';
+            const best = localStorage.getItem(bestKey);
+            const current = gameTime;
+            if (best === null || current < parseInt(best, 10)) {
+                localStorage.setItem(bestKey, String(current));
+            }
+            document.getElementById('winTime').textContent = current;
+            document.getElementById('winBest').textContent = best ? Math.min(current, parseInt(best, 10)) : current;
             document.getElementById('winScreen').style.display = 'flex';
-            createParticles(goal.x + goal.width / 2, goal.y + goal.height / 2, '#ffd700');
+            const colors = ['#ff1493', '#ff69b4', '#ffd700', '#fff'];
+            for (let i = 0; i < 40; i++) {
+                setTimeout(() => {
+                    createParticles(400 + (Math.random() - 0.5) * 200, 300, colors[i % 4]);
+                }, i * 30);
+            }
         }
 
         function drawObstacles() {
@@ -844,20 +959,39 @@
             ctx.arc(650 + Math.sin(Date.now() * 0.0003) * 15, 120, 25, 0, Math.PI * 2);
             ctx.fill();
             
-            // Hearts in background
-            ctx.fillStyle = 'rgba(255, 20, 147, 0.1)';
-            for (let i = 0; i < 5; i++) {
-                const x = (i * 180 + Date.now() * 0.02) % canvas.width;
-                const y = 50 + Math.sin(Date.now() * 0.001 + i) * 30;
+            // Hearts in background (nhiều hơn, đẹp hơn)
+            const t = Date.now() * 0.001;
+            for (let i = 0; i < 12; i++) {
+                const x = ((i * 70 + t * 15) % (canvas.width + 40)) - 20;
+                const y = 40 + Math.sin(t + i * 0.7) * 25 + (i % 3) * 15;
+                ctx.fillStyle = `rgba(255, 20, 147, ${0.06 + Math.sin(t * 2 + i) * 0.04})`;
                 ctx.beginPath();
-                ctx.arc(x - 5, y, 8, 0, Math.PI * 2);
-                ctx.arc(x + 5, y, 8, 0, Math.PI * 2);
+                ctx.moveTo(x, y + 4);
+                ctx.bezierCurveTo(x - 4, y - 2, x - 6, y - 2, x - 6, y + 2);
+                ctx.bezierCurveTo(x - 6, y + 6, x, y + 10, x, y + 10);
+                ctx.bezierCurveTo(x, y + 10, x + 6, y + 6, x + 6, y + 2);
+                ctx.bezierCurveTo(x + 6, y - 2, x + 4, y - 2, x, y + 4);
                 ctx.fill();
+            }
+        }
+
+        function drawLevelIntro() {
+            const el = document.getElementById('levelIntro');
+            if (Date.now() < levelIntroUntil && currentLevel >= 0) {
+                const level = LEVELS[currentLevel];
+                if (level && !el.classList.contains('show')) {
+                    el.classList.add('show');
+                    el.innerHTML = '<span class="intro-text">💕 ' + level.name + ' 💕</span>';
+                }
+            } else {
+                el.classList.remove('show');
             }
         }
 
         function gameLoop() {
             if (!gameStarted) return;
+
+            drawLevelIntro();
 
             // Update timer
             const now = Date.now();
@@ -867,8 +1001,18 @@
                 lastTime = now;
             }
 
+            // Screen shake
+            let shakeX = 0, shakeY = 0;
+            if (screenShake > 0) {
+                shakeX = (Math.random() - 0.5) * 8;
+                shakeY = (Math.random() - 0.5) * 8;
+                screenShake--;
+            }
+            ctx.save();
+            ctx.translate(shakeX, shakeY);
+
             // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(-10, -10, canvas.width + 20, canvas.height + 20);
 
             // Draw
             drawBackground();
@@ -886,6 +1030,7 @@
             checkObstacleCollision();
             checkCollisions();
 
+            ctx.restore();
             requestAnimationFrame(gameLoop);
         }
 
