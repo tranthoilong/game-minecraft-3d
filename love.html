@@ -1,11 +1,897 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>💕 Love Adventure - Kỷ Niệm 14/02 💕</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path fill='%23ff1493' d='M16 28c-.3 0-.6-.1-.8-.3C14.2 26.5 4 17.3 4 10.5 4 7.4 6.4 5 9.5 5c2.4 0 4.6 1.2 6 3.1 1.4-1.9 3.6-3.1 6-3.1 3.1 0 5.5 2.4 5.5 5.5 0 6.8-10.2 16-11.2 17.2-.2.2-.5.3-.8.3z'/></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            position: relative;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        #gameCanvas {
+            display: block;
+            border: 3px solid #e91e63;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #87ceeb 0%, #e0f6ff 100%);
+        }
+
+        #ui {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            right: 30px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .stat {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 20px;
+            border-radius: 15px;
+            font-weight: bold;
+            color: #e91e63;
+            font-size: 18px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(255, 240, 245, 0.98));
+            padding: 30px 50px;
+            border-radius: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #e91e63;
+            text-align: center;
+            box-shadow: 0 15px 40px rgba(233, 30, 99, 0.4);
+            opacity: 0;
+            max-width: 80%;
+            z-index: 20;
+            border: 3px solid rgba(255, 20, 147, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        #message.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        #startScreen, #winScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.98), rgba(118, 75, 162, 0.98));
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            color: white;
+            border-radius: 10px;
+        }
+
+        #winScreen {
+            display: none;
+        }
+
+        .screen-title {
+            font-size: 42px;
+            margin-bottom: 20px;
+            text-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: pulse 2s infinite;
+        }
+
+        .screen-text {
+            font-size: 18px;
+            text-align: center;
+            max-width: 500px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            padding: 0 20px;
+        }
+
+        .screen-button {
+            padding: 15px 40px;
+            font-size: 20px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .screen-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        }
+
+        .controls {
+            margin-top: 20px;
+            font-size: 16px;
+            text-align: center;
+            opacity: 0.9;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @media (max-width: 768px) {
+            #gameContainer {
+                padding: 10px;
+            }
+            
+            #gameCanvas {
+                width: 100%;
+                height: auto;
+            }
+
+            .stat {
+                font-size: 14px;
+                padding: 8px 15px;
+            }
+
+            .screen-title {
+                font-size: 32px;
+            }
+
+            .screen-text {
+                font-size: 16px;
+            }
+        }
+    </style>
 </head>
 <body>
-    
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        
+        <div id="ui">
+            <div class="stat">🌸 <span id="levelName">Màn 1</span></div>
+            <div class="stat">❤️ Trái Tim: <span id="hearts">0/3</span></div>
+            <div class="stat">⏱️ Thời Gian: <span id="time">0</span>s</div>
+        </div>
+
+        <div id="message"></div>
+
+        <div id="startScreen">
+            <div class="screen-title">💕 Love Adventure 💕</div>
+            <div class="screen-text">
+                Chúc mừng kỷ niệm ngày 14/02!<br>
+                Hãy giúp nhân vật tìm đường đến gặp người yêu,<br>
+                thu thập tất cả trái tim và khám phá những lời nhắn đặc biệt! 🌹
+            </div>
+            <button class="screen-button" onclick="startGame()">Bắt Đầu Phiêu Lưu 💖</button>
+            <div class="controls">
+                🎮 Di chuyển: ← → hoặc A D | Nhảy: ↑ hoặc W hoặc Space
+            </div>
+        </div>
+
+        <div id="winScreen">
+            <div class="screen-title">🎉 Chúc Mừng! 🎉</div>
+            <div class="screen-text">
+                Em đã hoàn thành cuộc phiêu lưu!<br>
+                Anh yêu em rất nhiều! ❤️<br>
+                Chúc mừng kỷ niệm ngày quen nhau của chúng mình!<br>
+                Yêu em 3000! 💕
+            </div>
+            <button class="screen-button" onclick="location.reload()">Chơi Lại 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Love messages (dùng cho tất cả màn)
+        const loveMessages = [
+            "💕 Anh yêu em nhiều lắm!",
+            "🌹 Em là người đặc biệt nhất!",
+            "✨ Mỗi ngày bên em đều tuyệt vời!",
+            "💖 Em làm cuộc đời anh ý nghĩa!",
+            "🌟 Anh muốn ở bên em mãi mãi!",
+            "💝 Chúc mừng kỷ niệm 14/02!",
+            "💗 Forever Together! 💕",
+            "🌸 Cảm ơn em đã bên anh!",
+            "💫 Yêu em 3000!"
+        ];
+
+        // Định nghĩa 3 màn chơi
+        const LEVELS = [
+            {
+                name: "Gặp Nhau",
+                spawn: { x: 50, y: 100 },
+                platforms: [
+                    { x: 0, y: 560, width: 250, height: 40 },
+                    { x: 300, y: 560, width: 200, height: 40 },
+                    { x: 550, y: 560, width: 250, height: 40 },
+                    { x: 120, y: 450, width: 100, height: 20 },
+                    { x: 280, y: 380, width: 120, height: 20 },
+                    { x: 450, y: 320, width: 100, height: 20 },
+                    { x: 620, y: 450, width: 100, height: 20 },
+                    { x: 700, y: 350, width: 80, height: 20 }
+                ],
+                hearts: [
+                    { x: 155, y: 430, width: 24, height: 24, collected: false, messageIndex: 0 },
+                    { x: 315, y: 360, width: 24, height: 24, collected: false, messageIndex: 1 },
+                    { x: 730, y: 330, width: 24, height: 24, collected: false, messageIndex: 2 }
+                ],
+                goal: { x: 720, y: 280, width: 40, height: 60 },
+                obstacles: [
+                    { type: 'flower', x: 420, y: 520, width: 40, height: 50 },
+                    { type: 'flower', x: 200, y: 540, width: 40, height: 50 }
+                ]
+            },
+            {
+                name: "Hẹn Hò",
+                spawn: { x: 50, y: 100 },
+                platforms: [
+                    { x: 0, y: 560, width: 180, height: 40 },
+                    { x: 220, y: 560, width: 160, height: 40 },
+                    { x: 420, y: 560, width: 180, height: 40 },
+                    { x: 640, y: 560, width: 160, height: 40 },
+                    { x: 80, y: 420, width: 90, height: 20 },
+                    { x: 250, y: 350, width: 100, height: 20 },
+                    { x: 450, y: 280, width: 90, height: 20 },
+                    { x: 600, y: 350, width: 100, height: 20 },
+                    { x: 350, y: 200, width: 120, height: 20 },
+                    { x: 700, y: 200, width: 80, height: 20 }
+                ],
+                hearts: [
+                    { x: 105, y: 400, width: 24, height: 24, collected: false, messageIndex: 3 },
+                    { x: 275, y: 330, width: 24, height: 24, collected: false, messageIndex: 4 },
+                    { x: 720, y: 180, width: 24, height: 24, collected: false, messageIndex: 5 }
+                ],
+                goal: { x: 730, y: 130, width: 40, height: 60 },
+                obstacles: [
+                    { type: 'flower', x: 380, y: 540, width: 40, height: 50 },
+                    { type: 'cloud', x: 320, y: 400, width: 50, height: 36, startX: 300, endX: 400, speed: 0.45, offset: 0 },
+                    { type: 'star', x: 520, y: 250, width: 36, height: 36, angle: 0 }
+                ]
+            },
+            {
+                name: "Yêu Thương",
+                spawn: { x: 50, y: 100 },
+                platforms: [
+                    { x: 0, y: 560, width: 150, height: 40 },
+                    { x: 200, y: 560, width: 120, height: 40 },
+                    { x: 370, y: 560, width: 150, height: 40 },
+                    { x: 560, y: 560, width: 120, height: 40 },
+                    { x: 720, y: 560, width: 80, height: 40 },
+                    { x: 150, y: 450, width: 80, height: 20 },
+                    { x: 320, y: 380, width: 90, height: 20 },
+                    { x: 480, y: 450, width: 80, height: 20 },
+                    { x: 620, y: 380, width: 90, height: 20 },
+                    { x: 200, y: 300, width: 70, height: 20 },
+                    { x: 400, y: 240, width: 80, height: 20 },
+                    { x: 580, y: 300, width: 70, height: 20 },
+                    { x: 380, y: 150, width: 100, height: 20 },
+                    { x: 700, y: 120, width: 80, height: 20 }
+                ],
+                hearts: [
+                    { x: 175, y: 430, width: 24, height: 24, collected: false, messageIndex: 6 },
+                    { x: 505, y: 430, width: 24, height: 24, collected: false, messageIndex: 7 },
+                    { x: 715, y: 100, width: 24, height: 24, collected: false, messageIndex: 8 }
+                ],
+                goal: { x: 730, y: 50, width: 40, height: 60 },
+                obstacles: [
+                    { type: 'flower', x: 270, y: 540, width: 40, height: 50 },
+                    { type: 'flower', x: 530, y: 540, width: 40, height: 50 },
+                    { type: 'cloud', x: 360, y: 360, width: 50, height: 36, startX: 320, endX: 440, speed: 0.5, offset: 0 },
+                    { type: 'cloud', x: 560, y: 280, width: 50, height: 36, startX: 520, endX: 620, speed: -0.5, offset: 0 },
+                    { type: 'star', x: 320, y: 220, width: 36, height: 36, angle: 0 },
+                    { type: 'star', x: 600, y: 270, width: 36, height: 36, angle: 0 }
+                ]
+            }
+        ];
+
+        // Game state
+        let gameStarted = false;
+        let gameTime = 0;
+        let lastTime = 0;
+        let currentLevel = 0;
+        let platforms = [];
+        let hearts = [];
+        let goal = null;
+        let obstacles = [];
+        let heartsCollected = 0;
+        let totalHeartsLevel = 3;
+        let invincibleUntil = 0;
+        let levelTransitioning = false;
+        const INVINCIBLE_DURATION = 1500;
+
+        // Player
+        const player = {
+            x: 50,
+            y: 100,
+            width: 32,
+            height: 40,
+            speedX: 0,
+            speedY: 0,
+            gravity: 0.6,
+            jumpPower: -12,
+            moveSpeed: 5,
+            onGround: false,
+            facing: 1
+        };
+
+        const keys = { left: false, right: false, jump: false };
+
+        function loadLevel(index) {
+            const level = LEVELS[index];
+            if (!level) return;
+            levelTransitioning = false;
+            currentLevel = index;
+            platforms = level.platforms.map(p => ({ ...p }));
+            hearts = level.hearts.map(h => ({ ...h, collected: false }));
+            goal = { ...level.goal };
+            obstacles = level.obstacles.map(o => ({ ...o, angle: o.angle || 0, offset: o.offset || 0 }));
+            totalHeartsLevel = hearts.length;
+            heartsCollected = 0;
+            player.x = level.spawn.x;
+            player.y = level.spawn.y;
+            player.speedX = 0;
+            player.speedY = 0;
+            invincibleUntil = Date.now() + INVINCIBLE_DURATION;
+            document.getElementById('hearts').textContent = `0/${totalHeartsLevel}`;
+            document.getElementById('levelName').textContent = level.name + ' 💕';
+        }
+
+        // Particle effects
+        let particles = [];
+
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 10; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 5,
+                    vy: (Math.random() - 0.5) * 5 - 2,
+                    life: 60,
+                    color: color
+                });
+            }
+        }
+
+        function updateParticles() {
+            particles = particles.filter(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.2;
+                p.life--;
+                return p.life > 0;
+            });
+        }
+
+        function drawParticles() {
+            particles.forEach(p => {
+                ctx.globalAlpha = p.life / 60;
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, 4, 4);
+                ctx.globalAlpha = 1;
+            });
+        }
+
+        // Event listeners
+        document.addEventListener('keydown', (e) => {
+            if (!gameStarted) return;
+            
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                keys.left = true;
+            }
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                keys.right = true;
+            }
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') {
+                keys.jump = true;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                keys.left = false;
+            }
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                keys.right = false;
+            }
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') {
+                keys.jump = false;
+            }
+        });
+
+        function startGame() {
+            gameStarted = true;
+            document.getElementById('startScreen').style.display = 'none';
+            lastTime = Date.now();
+            loadLevel(0);
+            gameLoop();
+        }
+
+        function updateObstacles() {
+            const now = Date.now() * 0.001;
+            obstacles.forEach(obs => {
+                if (obs.type === 'cloud') {
+                    obs.x += obs.speed;
+                    if (obs.speed > 0 && obs.x >= obs.endX) obs.speed = -Math.abs(obs.speed);
+                    if (obs.speed < 0 && obs.x <= obs.startX) obs.speed = Math.abs(obs.speed);
+                }
+                if (obs.type === 'star') {
+                    obs.angle = (obs.angle || 0) + 0.08;
+                }
+            });
+        }
+
+        function updatePlayer() {
+            if (keys.left) {
+                player.speedX = -player.moveSpeed;
+                player.facing = -1;
+            } else if (keys.right) {
+                player.speedX = player.moveSpeed;
+                player.facing = 1;
+            } else {
+                player.speedX *= 0.8;
+            }
+
+            if (keys.jump && player.onGround) {
+                player.speedY = player.jumpPower;
+                player.onGround = false;
+            }
+
+            player.speedY += player.gravity;
+            player.x += player.speedX;
+            player.y += player.speedY;
+
+            player.onGround = false;
+            platforms.forEach(platform => {
+                if (player.x + player.width > platform.x &&
+                    player.x < platform.x + platform.width &&
+                    player.y + player.height > platform.y &&
+                    player.y + player.height < platform.y + platform.height &&
+                    player.speedY > 0) {
+                    player.y = platform.y - player.height;
+                    player.speedY = 0;
+                    player.onGround = true;
+                }
+            });
+
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+            
+            if (player.y > canvas.height) {
+                respawn();
+            }
+        }
+
+        function respawn() {
+            const level = LEVELS[currentLevel];
+            player.x = level.spawn.x;
+            player.y = level.spawn.y;
+            player.speedX = 0;
+            player.speedY = 0;
+            invincibleUntil = Date.now() + INVINCIBLE_DURATION;
+        }
+
+        function checkObstacleCollision() {
+            if (Date.now() < invincibleUntil) return;
+            const margin = 4;
+            const px = player.x + margin;
+            const py = player.y + margin;
+            const pw = player.width - margin * 2;
+            const ph = player.height - margin * 2;
+
+            for (const obs of obstacles) {
+                let hit = false;
+                if (obs.type === 'flower') {
+                    const thornH = 18;
+                    const ox = obs.x + 8;
+                    const oy = obs.y + obs.height - thornH;
+                    const ow = obs.width - 16;
+                    if (px + pw > ox && px < ox + ow && py + ph > oy && py < oy + thornH) hit = true;
+                } else {
+                    if (px + pw > obs.x && px < obs.x + obs.width && py + ph > obs.y && py < obs.y + obs.height) hit = true;
+                }
+                if (hit) {
+                    respawn();
+                    createParticles(player.x + player.width / 2, player.y + player.height / 2, '#ff9999');
+                }
+            }
+        }
+
+        function checkCollisions() {
+            hearts.forEach((heart) => {
+                if (!heart.collected &&
+                    player.x + player.width > heart.x &&
+                    player.x < heart.x + heart.width &&
+                    player.y + player.height > heart.y &&
+                    player.y < heart.y + heart.height) {
+                    heart.collected = true;
+                    heartsCollected++;
+                    document.getElementById('hearts').textContent = `${heartsCollected}/${totalHeartsLevel}`;
+                    showMessage(loveMessages[heart.messageIndex]);
+                    createParticles(heart.x + heart.width / 2, heart.y + heart.height / 2, '#ff1493');
+                }
+            });
+
+            if (levelTransitioning || heartsCollected !== totalHeartsLevel || !goal) return;
+            if (player.x + player.width > goal.x &&
+                player.x < goal.x + goal.width &&
+                player.y + player.height > goal.y &&
+                player.y < goal.y + goal.height) {
+                if (currentLevel < LEVELS.length - 1) {
+                    levelTransitioning = true;
+                    showMessage('🎉 Màn tiếp theo! 💕');
+                    setTimeout(() => {
+                        loadLevel(currentLevel + 1);
+                    }, 1800);
+                } else {
+                    winGame();
+                }
+            }
+        }
+
+        function showMessage(text) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.classList.add('show');
+            
+            setTimeout(() => {
+                messageEl.classList.remove('show');
+            }, 2500);
+        }
+
+        function winGame() {
+            gameStarted = false;
+            document.getElementById('winScreen').style.display = 'flex';
+            createParticles(goal.x + goal.width / 2, goal.y + goal.height / 2, '#ffd700');
+        }
+
+        function drawObstacles() {
+            obstacles.forEach(obs => {
+                ctx.save();
+                if (obs.type === 'flower') {
+                    const cx = obs.x + obs.width / 2;
+                    const cy = obs.y + obs.height / 2;
+                    ctx.translate(cx, cy);
+                    // Thân cây xanh lá
+                    ctx.fillStyle = '#7CB342';
+                    ctx.fillRect(-6, 5, 12, obs.height - 15);
+                    ctx.strokeStyle = '#558B2F';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(-6, 5, 12, obs.height - 15);
+                    // Lá nhỏ
+                    ctx.fillStyle = '#8BC34A';
+                    ctx.beginPath();
+                    ctx.ellipse(8, 15, 8, 4, 0.3, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.ellipse(-8, 25, 8, 4, -0.3, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Bông hoa hồng dễ thương
+                    ctx.fillStyle = '#f48fb1';
+                    ctx.shadowColor = '#ec407a';
+                    ctx.shadowBlur = 5;
+                    ctx.beginPath();
+                    ctx.arc(0, -5, 14, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#ff80ab';
+                    ctx.beginPath();
+                    ctx.arc(0, -5, 10, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Mắt cười
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    ctx.arc(-4, -7, 3, 0, Math.PI * 2);
+                    ctx.arc(4, -7, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#5d4037';
+                    ctx.beginPath();
+                    ctx.arc(-4, -7, 1.5, 0, Math.PI * 2);
+                    ctx.arc(4, -7, 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(0, -2, 3, 0.2 * Math.PI, 0.8 * Math.PI);
+                    ctx.strokeStyle = '#5d4037';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    // Gai dễ thương (phần nguy hiểm - màu hồng nhạt)
+                    ctx.fillStyle = '#f8bbd0';
+                    for (let i = 0; i < 5; i++) {
+                        const gx = -8 + i * 4;
+                        ctx.beginPath();
+                        ctx.moveTo(gx, obs.height / 2 - 5);
+                        ctx.lineTo(gx + 3, obs.height / 2 + 12);
+                        ctx.lineTo(gx + 6, obs.height / 2 - 5);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.strokeStyle = '#f48fb1';
+                        ctx.stroke();
+                    }
+                } else if (obs.type === 'cloud') {
+                    ctx.translate(obs.x + obs.width / 2, obs.y + obs.height / 2);
+                    ctx.fillStyle = '#f8bbd0';
+                    ctx.shadowColor = '#f48fb1';
+                    ctx.shadowBlur = 8;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 18, 0, Math.PI * 2);
+                    ctx.arc(-15, -2, 14, 0, Math.PI * 2);
+                    ctx.arc(15, -3, 16, 0, Math.PI * 2);
+                    ctx.arc(-8, -10, 12, 0, Math.PI * 2);
+                    ctx.arc(8, -12, 13, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    ctx.arc(-4, -5, 4, 0, Math.PI * 2);
+                    ctx.arc(5, -6, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#ec407a';
+                    ctx.beginPath();
+                    ctx.arc(-4, -5, 2, 0, Math.PI * 2);
+                    ctx.arc(5, -6, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(0, 2, 5, 0.2 * Math.PI, 0.8 * Math.PI);
+                    ctx.strokeStyle = '#ec407a';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                } else if (obs.type === 'star') {
+                    ctx.translate(obs.x + obs.width / 2, obs.y + obs.height / 2);
+                    ctx.rotate(obs.angle || 0);
+                    const r = 18;
+                    ctx.fillStyle = '#fff59d';
+                    ctx.shadowColor = '#ffc107';
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    for (let i = 0; i < 5; i++) {
+                        const a = (i * 4 * Math.PI / 5) - Math.PI / 2;
+                        const x = Math.cos(a) * r;
+                        const y = Math.sin(a) * r;
+                        if (i === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#ffe082';
+                    ctx.strokeStyle = '#ffb300';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    ctx.arc(-2, -2, 2, 0, Math.PI * 2);
+                    ctx.arc(2, 1, 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            });
+        }
+
+        function drawPlayer() {
+            if (Date.now() < invincibleUntil && Math.floor(Date.now() / 80) % 2 === 0) return; // Nhấp nháy khi bất tử
+            ctx.save();
+            ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
+            if (player.facing === -1) ctx.scale(-1, 1);
+            
+            ctx.fillStyle = '#4CAF50';
+            ctx.fillRect(-player.width / 2, -player.height / 2 + 10, player.width, player.height - 10);
+            
+            ctx.fillStyle = '#FFD1DC';
+            ctx.beginPath();
+            ctx.arc(0, -player.height / 2 + 5, 12, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#000';
+            ctx.fillRect(-5, -player.height / 2 + 2, 3, 3);
+            ctx.fillRect(2, -player.height / 2 + 2, 3, 3);
+            
+            ctx.beginPath();
+            ctx.arc(0, -player.height / 2 + 7, 5, 0, Math.PI);
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+
+        function drawPlatforms() {
+            platforms.forEach(platform => {
+                // Platform shadow
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.fillRect(platform.x + 3, platform.y + 3, platform.width, platform.height);
+                
+                // Platform
+                const gradient = ctx.createLinearGradient(0, platform.y, 0, platform.y + platform.height);
+                gradient.addColorStop(0, '#8B4513');
+                gradient.addColorStop(1, '#654321');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+                
+                // Platform highlight
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                ctx.fillRect(platform.x, platform.y, platform.width, 3);
+            });
+        }
+
+        function drawHearts() {
+            hearts.forEach(heart => {
+                if (!heart.collected) {
+                    const time = Date.now() * 0.003;
+                    const bounce = Math.sin(time * 2) * 3;
+                    
+                    ctx.save();
+                    ctx.translate(heart.x + heart.width / 2, heart.y + heart.height / 2 + bounce);
+                    
+                    // Heart shape
+                    ctx.fillStyle = '#ff1493';
+                    ctx.beginPath();
+                    ctx.moveTo(0, 3);
+                    ctx.bezierCurveTo(-6, -3, -12, -3, -12, 3);
+                    ctx.bezierCurveTo(-12, 9, 0, 15, 0, 15);
+                    ctx.bezierCurveTo(0, 15, 12, 9, 12, 3);
+                    ctx.bezierCurveTo(12, -3, 6, -3, 0, 3);
+                    ctx.fill();
+                    
+                    // Glow effect
+                    ctx.shadowColor = '#ff1493';
+                    ctx.shadowBlur = 10;
+                    ctx.fill();
+                    
+                    ctx.restore();
+                }
+            });
+        }
+
+        function drawGoal() {
+            if (!goal) return;
+            const time = Date.now() * 0.002;
+            const pulse = Math.sin(time) * 0.1 + 1;
+            
+            ctx.save();
+            ctx.translate(goal.x + goal.width / 2, goal.y + goal.height / 2);
+            ctx.scale(pulse, pulse);
+            
+            // Only show when all hearts collected
+            if (heartsCollected === totalHeartsLevel) {
+                // Glow effect
+                ctx.shadowColor = '#ffd700';
+                ctx.shadowBlur = 20;
+                
+                // Body
+                ctx.fillStyle = '#ff69b4';
+                ctx.fillRect(-goal.width / 2, -goal.height / 2 + 15, goal.width, goal.height - 15);
+                
+                // Head
+                ctx.fillStyle = '#FFD1DC';
+                ctx.beginPath();
+                ctx.arc(0, -goal.height / 2 + 8, 15, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Heart above head
+                ctx.fillStyle = '#ff1493';
+                ctx.beginPath();
+                ctx.moveTo(0, -goal.height / 2 - 10);
+                ctx.bezierCurveTo(-4, -goal.height / 2 - 15, -8, -goal.height / 2 - 15, -8, -goal.height / 2 - 10);
+                ctx.bezierCurveTo(-8, -goal.height / 2 - 5, 0, -goal.height / 2, 0, -goal.height / 2);
+                ctx.bezierCurveTo(0, -goal.height / 2, 8, -goal.height / 2 - 5, 8, -goal.height / 2 - 10);
+                ctx.bezierCurveTo(8, -goal.height / 2 - 15, 4, -goal.height / 2 - 15, 0, -goal.height / 2 - 10);
+                ctx.fill();
+            } else {
+                // Show silhouette when hearts not collected
+                ctx.globalAlpha = 0.3;
+                ctx.fillStyle = '#999';
+                ctx.fillRect(-goal.width / 2, -goal.height / 2, goal.width, goal.height);
+                ctx.globalAlpha = 1;
+            }
+            
+            ctx.restore();
+        }
+
+        function drawBackground() {
+            // Sky gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#87ceeb');
+            gradient.addColorStop(1, '#e0f6ff');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Clouds
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.beginPath();
+            ctx.arc(100 + Math.sin(Date.now() * 0.0005) * 20, 80, 30, 0, Math.PI * 2);
+            ctx.arc(130 + Math.sin(Date.now() * 0.0005) * 20, 80, 35, 0, Math.PI * 2);
+            ctx.arc(160 + Math.sin(Date.now() * 0.0005) * 20, 80, 30, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(600 + Math.sin(Date.now() * 0.0003) * 15, 120, 25, 0, Math.PI * 2);
+            ctx.arc(625 + Math.sin(Date.now() * 0.0003) * 15, 120, 30, 0, Math.PI * 2);
+            ctx.arc(650 + Math.sin(Date.now() * 0.0003) * 15, 120, 25, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Hearts in background
+            ctx.fillStyle = 'rgba(255, 20, 147, 0.1)';
+            for (let i = 0; i < 5; i++) {
+                const x = (i * 180 + Date.now() * 0.02) % canvas.width;
+                const y = 50 + Math.sin(Date.now() * 0.001 + i) * 30;
+                ctx.beginPath();
+                ctx.arc(x - 5, y, 8, 0, Math.PI * 2);
+                ctx.arc(x + 5, y, 8, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function gameLoop() {
+            if (!gameStarted) return;
+
+            // Update timer
+            const now = Date.now();
+            if (now - lastTime >= 1000) {
+                gameTime++;
+                document.getElementById('time').textContent = gameTime;
+                lastTime = now;
+            }
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw
+            drawBackground();
+            drawPlatforms();
+            drawObstacles();
+            drawHearts();
+            drawGoal();
+            drawPlayer();
+            updateParticles();
+            drawParticles();
+
+            // Update
+            updateObstacles();
+            updatePlayer();
+            checkObstacleCollision();
+            checkCollisions();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Initial draw
+        drawBackground();
+        drawPlatforms();
+        drawHearts();
+        drawGoal();
+    </script>
 </body>
 </html>
