@@ -1,11 +1,659 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>💕 Love Adventure - Kỷ Niệm 14/02 💕</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            position: relative;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        #gameCanvas {
+            display: block;
+            border: 3px solid #e91e63;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #87ceeb 0%, #e0f6ff 100%);
+        }
+
+        #ui {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            right: 30px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .stat {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 20px;
+            border-radius: 15px;
+            font-weight: bold;
+            color: #e91e63;
+            font-size: 18px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(255, 240, 245, 0.98));
+            padding: 30px 50px;
+            border-radius: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #e91e63;
+            text-align: center;
+            box-shadow: 0 15px 40px rgba(233, 30, 99, 0.4);
+            opacity: 0;
+            max-width: 80%;
+            z-index: 20;
+            border: 3px solid rgba(255, 20, 147, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        #message.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        #startScreen, #winScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.98), rgba(118, 75, 162, 0.98));
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            color: white;
+            border-radius: 10px;
+        }
+
+        #winScreen {
+            display: none;
+        }
+
+        .screen-title {
+            font-size: 42px;
+            margin-bottom: 20px;
+            text-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: pulse 2s infinite;
+        }
+
+        .screen-text {
+            font-size: 18px;
+            text-align: center;
+            max-width: 500px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            padding: 0 20px;
+        }
+
+        .screen-button {
+            padding: 15px 40px;
+            font-size: 20px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .screen-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        }
+
+        .controls {
+            margin-top: 20px;
+            font-size: 16px;
+            text-align: center;
+            opacity: 0.9;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @media (max-width: 768px) {
+            #gameContainer {
+                padding: 10px;
+            }
+            
+            #gameCanvas {
+                width: 100%;
+                height: auto;
+            }
+
+            .stat {
+                font-size: 14px;
+                padding: 8px 15px;
+            }
+
+            .screen-title {
+                font-size: 32px;
+            }
+
+            .screen-text {
+                font-size: 16px;
+            }
+        }
+    </style>
 </head>
 <body>
-    
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        
+        <div id="ui">
+            <div class="stat">❤️ Trái Tim: <span id="hearts">0/7</span></div>
+            <div class="stat">⏱️ Thời Gian: <span id="time">0</span>s</div>
+        </div>
+
+        <div id="message"></div>
+
+        <div id="startScreen">
+            <div class="screen-title">💕 Love Adventure 💕</div>
+            <div class="screen-text">
+                Chúc mừng kỷ niệm ngày 14/02!<br>
+                Hãy giúp nhân vật tìm đường đến gặp người yêu,<br>
+                thu thập tất cả trái tim và khám phá những lời nhắn đặc biệt! 🌹
+            </div>
+            <button class="screen-button" onclick="startGame()">Bắt Đầu Phiêu Lưu 💖</button>
+            <div class="controls">
+                🎮 Di chuyển: ← → hoặc A D | Nhảy: ↑ hoặc W hoặc Space
+            </div>
+        </div>
+
+        <div id="winScreen">
+            <div class="screen-title">🎉 Chúc Mừng! 🎉</div>
+            <div class="screen-text">
+                Em đã hoàn thành cuộc phiêu lưu!<br>
+                Anh yêu em rất nhiều! ❤️<br>
+                Chúc mừng kỷ niệm ngày quen nhau của chúng mình!<br>
+                Yêu em 3000! 💕
+            </div>
+            <button class="screen-button" onclick="location.reload()">Chơi Lại 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Game state
+        let gameStarted = false;
+        let gameTime = 0;
+        let lastTime = 0;
+        let heartsCollected = 0;
+        const totalHearts = 7;
+
+        // Love messages
+        const loveMessages = [
+            "💕 Anh yêu em nhiều lắm!",
+            "🌹 Em là người đặc biệt nhất!",
+            "✨ Mỗi ngày bên em đều tuyệt vời!",
+            "💖 Em làm cuộc đời anh ý nghĩa!",
+            "🌟 Anh muốn ở bên em mãi mãi!",
+            "💝 Chúc mừng kỷ niệm 14/02!",
+            "💗 Forever Together! 💕"
+        ];
+
+        // Player
+        const player = {
+            x: 50,
+            y: 0,
+            width: 32,
+            height: 40,
+            speedX: 0,
+            speedY: 0,
+            gravity: 0.6,
+            jumpPower: -12,
+            moveSpeed: 5,
+            onGround: false,
+            facing: 1 // 1 = right, -1 = left
+        };
+
+        // Keys
+        const keys = {
+            left: false,
+            right: false,
+            jump: false
+        };
+
+        // Platforms
+        const platforms = [
+            // Ground
+            { x: 0, y: 560, width: 300, height: 40 },
+            { x: 350, y: 560, width: 150, height: 40 },
+            { x: 550, y: 560, width: 250, height: 40 },
+            
+            // Level 1 - easy jumps
+            { x: 150, y: 480, width: 100, height: 20 },
+            { x: 300, y: 420, width: 120, height: 20 },
+            { x: 450, y: 360, width: 100, height: 20 },
+            
+            // Level 2 - medium difficulty
+            { x: 100, y: 300, width: 80, height: 20 },
+            { x: 250, y: 240, width: 90, height: 20 },
+            { x: 400, y: 200, width: 100, height: 20 },
+            { x: 570, y: 240, width: 90, height: 20 },
+            
+            // Level 3 - higher platforms
+            { x: 680, y: 180, width: 100, height: 20 },
+            { x: 600, y: 360, width: 120, height: 20 },
+            { x: 650, y: 480, width: 100, height: 20 }
+        ];
+
+        // Hearts - positioned strategically on platforms
+        const hearts = [
+            { x: 180, y: 450, width: 24, height: 24, collected: false, messageIndex: 0 },
+            { x: 340, y: 390, width: 24, height: 24, collected: false, messageIndex: 1 },
+            { x: 475, y: 330, width: 24, height: 24, collected: false, messageIndex: 2 },
+            { x: 120, y: 270, width: 24, height: 24, collected: false, messageIndex: 3 },
+            { x: 270, y: 210, width: 24, height: 24, collected: false, messageIndex: 4 },
+            { x: 710, y: 150, width: 24, height: 24, collected: false, messageIndex: 5 },
+            { x: 680, y: 450, width: 24, height: 24, collected: false, messageIndex: 6 }
+        ];
+
+        // Goal (lover waiting)
+        const goal = {
+            x: 730,
+            y: 120,
+            width: 40,
+            height: 60
+        };
+
+        // Particle effects
+        let particles = [];
+
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 10; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 5,
+                    vy: (Math.random() - 0.5) * 5 - 2,
+                    life: 60,
+                    color: color
+                });
+            }
+        }
+
+        function updateParticles() {
+            particles = particles.filter(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.2;
+                p.life--;
+                return p.life > 0;
+            });
+        }
+
+        function drawParticles() {
+            particles.forEach(p => {
+                ctx.globalAlpha = p.life / 60;
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, 4, 4);
+                ctx.globalAlpha = 1;
+            });
+        }
+
+        // Event listeners
+        document.addEventListener('keydown', (e) => {
+            if (!gameStarted) return;
+            
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                keys.left = true;
+            }
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                keys.right = true;
+            }
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') {
+                keys.jump = true;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                keys.left = false;
+            }
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                keys.right = false;
+            }
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') {
+                keys.jump = false;
+            }
+        });
+
+        function startGame() {
+            gameStarted = true;
+            document.getElementById('startScreen').style.display = 'none';
+            lastTime = Date.now();
+            gameLoop();
+        }
+
+        function updatePlayer() {
+            // Horizontal movement
+            if (keys.left) {
+                player.speedX = -player.moveSpeed;
+                player.facing = -1;
+            } else if (keys.right) {
+                player.speedX = player.moveSpeed;
+                player.facing = 1;
+            } else {
+                player.speedX *= 0.8; // Friction
+            }
+
+            // Jumping
+            if (keys.jump && player.onGround) {
+                player.speedY = player.jumpPower;
+                player.onGround = false;
+            }
+
+            // Apply gravity
+            player.speedY += player.gravity;
+
+            // Move player
+            player.x += player.speedX;
+            player.y += player.speedY;
+
+            // Platform collision
+            player.onGround = false;
+            platforms.forEach(platform => {
+                if (player.x + player.width > platform.x &&
+                    player.x < platform.x + platform.width &&
+                    player.y + player.height > platform.y &&
+                    player.y + player.height < platform.y + platform.height &&
+                    player.speedY > 0) {
+                    
+                    player.y = platform.y - player.height;
+                    player.speedY = 0;
+                    player.onGround = true;
+                }
+            });
+
+            // Screen boundaries
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+            
+            // Fall off screen
+            if (player.y > canvas.height) {
+                player.x = 50;
+                player.y = 0;
+                player.speedY = 0;
+            }
+        }
+
+        function checkCollisions() {
+            // Check heart collection
+            hearts.forEach((heart, index) => {
+                if (!heart.collected &&
+                    player.x + player.width > heart.x &&
+                    player.x < heart.x + heart.width &&
+                    player.y + player.height > heart.y &&
+                    player.y < heart.y + heart.height) {
+                    
+                    heart.collected = true;
+                    heartsCollected++;
+                    document.getElementById('hearts').textContent = `${heartsCollected}/${totalHearts}`;
+                    
+                    // Show message
+                    showMessage(loveMessages[heart.messageIndex]);
+                    
+                    // Create particles
+                    createParticles(heart.x + heart.width / 2, heart.y + heart.height / 2, '#ff1493');
+                }
+            });
+
+            // Check goal
+            if (heartsCollected === totalHearts &&
+                player.x + player.width > goal.x &&
+                player.x < goal.x + goal.width &&
+                player.y + player.height > goal.y &&
+                player.y < goal.y + goal.height) {
+                
+                winGame();
+            }
+        }
+
+        function showMessage(text) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.classList.add('show');
+            
+            setTimeout(() => {
+                messageEl.classList.remove('show');
+            }, 2500);
+        }
+
+        function winGame() {
+            gameStarted = false;
+            document.getElementById('winScreen').style.display = 'flex';
+            createParticles(goal.x + goal.width / 2, goal.y + goal.height / 2, '#ffd700');
+        }
+
+        function drawPlayer() {
+            ctx.save();
+            ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
+            if (player.facing === -1) ctx.scale(-1, 1);
+            
+            // Body
+            ctx.fillStyle = '#4CAF50';
+            ctx.fillRect(-player.width / 2, -player.height / 2 + 10, player.width, player.height - 10);
+            
+            // Head
+            ctx.fillStyle = '#FFD1DC';
+            ctx.beginPath();
+            ctx.arc(0, -player.height / 2 + 5, 12, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Eyes
+            ctx.fillStyle = '#000';
+            ctx.fillRect(-5, -player.height / 2 + 2, 3, 3);
+            ctx.fillRect(2, -player.height / 2 + 2, 3, 3);
+            
+            // Smile
+            ctx.beginPath();
+            ctx.arc(0, -player.height / 2 + 7, 5, 0, Math.PI);
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+
+        function drawPlatforms() {
+            platforms.forEach(platform => {
+                // Platform shadow
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.fillRect(platform.x + 3, platform.y + 3, platform.width, platform.height);
+                
+                // Platform
+                const gradient = ctx.createLinearGradient(0, platform.y, 0, platform.y + platform.height);
+                gradient.addColorStop(0, '#8B4513');
+                gradient.addColorStop(1, '#654321');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+                
+                // Platform highlight
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                ctx.fillRect(platform.x, platform.y, platform.width, 3);
+            });
+        }
+
+        function drawHearts() {
+            hearts.forEach(heart => {
+                if (!heart.collected) {
+                    const time = Date.now() * 0.003;
+                    const bounce = Math.sin(time * 2) * 3;
+                    
+                    ctx.save();
+                    ctx.translate(heart.x + heart.width / 2, heart.y + heart.height / 2 + bounce);
+                    
+                    // Heart shape
+                    ctx.fillStyle = '#ff1493';
+                    ctx.beginPath();
+                    ctx.moveTo(0, 3);
+                    ctx.bezierCurveTo(-6, -3, -12, -3, -12, 3);
+                    ctx.bezierCurveTo(-12, 9, 0, 15, 0, 15);
+                    ctx.bezierCurveTo(0, 15, 12, 9, 12, 3);
+                    ctx.bezierCurveTo(12, -3, 6, -3, 0, 3);
+                    ctx.fill();
+                    
+                    // Glow effect
+                    ctx.shadowColor = '#ff1493';
+                    ctx.shadowBlur = 10;
+                    ctx.fill();
+                    
+                    ctx.restore();
+                }
+            });
+        }
+
+        function drawGoal() {
+            const time = Date.now() * 0.002;
+            const pulse = Math.sin(time) * 0.1 + 1;
+            
+            ctx.save();
+            ctx.translate(goal.x + goal.width / 2, goal.y + goal.height / 2);
+            ctx.scale(pulse, pulse);
+            
+            // Only show when all hearts collected
+            if (heartsCollected === totalHearts) {
+                // Glow effect
+                ctx.shadowColor = '#ffd700';
+                ctx.shadowBlur = 20;
+                
+                // Body
+                ctx.fillStyle = '#ff69b4';
+                ctx.fillRect(-goal.width / 2, -goal.height / 2 + 15, goal.width, goal.height - 15);
+                
+                // Head
+                ctx.fillStyle = '#FFD1DC';
+                ctx.beginPath();
+                ctx.arc(0, -goal.height / 2 + 8, 15, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Heart above head
+                ctx.fillStyle = '#ff1493';
+                ctx.beginPath();
+                ctx.moveTo(0, -goal.height / 2 - 10);
+                ctx.bezierCurveTo(-4, -goal.height / 2 - 15, -8, -goal.height / 2 - 15, -8, -goal.height / 2 - 10);
+                ctx.bezierCurveTo(-8, -goal.height / 2 - 5, 0, -goal.height / 2, 0, -goal.height / 2);
+                ctx.bezierCurveTo(0, -goal.height / 2, 8, -goal.height / 2 - 5, 8, -goal.height / 2 - 10);
+                ctx.bezierCurveTo(8, -goal.height / 2 - 15, 4, -goal.height / 2 - 15, 0, -goal.height / 2 - 10);
+                ctx.fill();
+            } else {
+                // Show silhouette when hearts not collected
+                ctx.globalAlpha = 0.3;
+                ctx.fillStyle = '#999';
+                ctx.fillRect(-goal.width / 2, -goal.height / 2, goal.width, goal.height);
+                ctx.globalAlpha = 1;
+            }
+            
+            ctx.restore();
+        }
+
+        function drawBackground() {
+            // Sky gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#87ceeb');
+            gradient.addColorStop(1, '#e0f6ff');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Clouds
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.beginPath();
+            ctx.arc(100 + Math.sin(Date.now() * 0.0005) * 20, 80, 30, 0, Math.PI * 2);
+            ctx.arc(130 + Math.sin(Date.now() * 0.0005) * 20, 80, 35, 0, Math.PI * 2);
+            ctx.arc(160 + Math.sin(Date.now() * 0.0005) * 20, 80, 30, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(600 + Math.sin(Date.now() * 0.0003) * 15, 120, 25, 0, Math.PI * 2);
+            ctx.arc(625 + Math.sin(Date.now() * 0.0003) * 15, 120, 30, 0, Math.PI * 2);
+            ctx.arc(650 + Math.sin(Date.now() * 0.0003) * 15, 120, 25, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Hearts in background
+            ctx.fillStyle = 'rgba(255, 20, 147, 0.1)';
+            for (let i = 0; i < 5; i++) {
+                const x = (i * 180 + Date.now() * 0.02) % canvas.width;
+                const y = 50 + Math.sin(Date.now() * 0.001 + i) * 30;
+                ctx.beginPath();
+                ctx.arc(x - 5, y, 8, 0, Math.PI * 2);
+                ctx.arc(x + 5, y, 8, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function gameLoop() {
+            if (!gameStarted) return;
+
+            // Update timer
+            const now = Date.now();
+            if (now - lastTime >= 1000) {
+                gameTime++;
+                document.getElementById('time').textContent = gameTime;
+                lastTime = now;
+            }
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw
+            drawBackground();
+            drawPlatforms();
+            drawHearts();
+            drawGoal();
+            drawPlayer();
+            updateParticles();
+            drawParticles();
+
+            // Update
+            updatePlayer();
+            checkCollisions();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Initial draw
+        drawBackground();
+        drawPlatforms();
+        drawHearts();
+        drawGoal();
+    </script>
 </body>
 </html>
