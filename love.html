@@ -178,6 +178,62 @@
             50% { transform: scale(1.05); }
         }
 
+        /* Touch controls - chỉ hiện trên mobile khi đang chơi */
+        .touch-controls {
+            display: none;
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            height: 72px;
+            z-index: 50;
+            pointer-events: none;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+        body.game-active .touch-controls {
+            display: flex;
+            pointer-events: auto;
+        }
+        @media (min-width: 769px) {
+            body.game-active .touch-controls {
+                display: none;
+            }
+        }
+        .touch-btn {
+            flex: 1;
+            max-width: 120px;
+            min-height: 56px;
+            border: none;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,240,245,0.95));
+            color: #e91e63;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.1s, box-shadow 0.1s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+        }
+        .touch-btn:active {
+            transform: scale(0.96);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        }
+        .touch-jump {
+            flex: 0 0 auto;
+            min-width: 80px;
+            font-size: 18px;
+            line-height: 1.2;
+        }
+
         @media (max-width: 768px) {
             #gameContainer {
                 padding: 10px;
@@ -224,7 +280,8 @@
             </div>
             <button class="screen-button" onclick="startGame()">Bắt Đầu Phiêu Lưu 💖</button>
             <div class="controls">
-                🎮 Di chuyển: ← → hoặc A D | Nhảy: ↑ W Space (nhảy 2 lần trên không)
+                🎮 Di chuyển: ← → hoặc A D | Nhảy: ↑ W Space (nhảy 2 lần trên không)<br>
+                📱 Mobile: dùng nút ← → ↑ bên dưới
             </div>
         </div>
 
@@ -239,6 +296,11 @@
             <button class="screen-button" onclick="location.reload()">Chơi Lại 🔄</button>
         </div>
         <div id="levelIntro"></div>
+        <div id="touchControls" class="touch-controls" aria-label="Điều khiển chạm">
+            <button type="button" class="touch-btn touch-left" data-action="left" aria-label="Trái">←</button>
+            <button type="button" class="touch-btn touch-right" data-action="right" aria-label="Phải">→</button>
+            <button type="button" class="touch-btn touch-jump" data-action="jump" aria-label="Nhảy">↑ Nhảy</button>
+        </div>
     </div>
 
     <script>
@@ -593,8 +655,58 @@
             }
         });
 
+        // Touch controls cho mobile
+        const touchControls = document.getElementById('touchControls');
+        if (touchControls) {
+            touchControls.addEventListener('touchstart', (e) => {
+                const btn = e.target.closest('[data-action]');
+                if (!btn || !gameStarted) return;
+                e.preventDefault();
+                const action = btn.getAttribute('data-action');
+                if (action === 'left') keys.left = true;
+                if (action === 'right') keys.right = true;
+                if (action === 'jump') keys.jump = true;
+            }, { passive: false });
+            touchControls.addEventListener('touchend', (e) => {
+                const btn = e.target.closest('[data-action]');
+                if (!btn) return;
+                e.preventDefault();
+                const action = btn.getAttribute('data-action');
+                if (action === 'left') keys.left = false;
+                if (action === 'right') keys.right = false;
+                if (action === 'jump') keys.jump = false;
+            }, { passive: false });
+            touchControls.addEventListener('touchcancel', (e) => {
+                keys.left = false;
+                keys.right = false;
+                keys.jump = false;
+            }, { passive: false });
+            touchControls.addEventListener('mousedown', (e) => {
+                const btn = e.target.closest('[data-action]');
+                if (!btn || !gameStarted) return;
+                const action = btn.getAttribute('data-action');
+                if (action === 'left') keys.left = true;
+                if (action === 'right') keys.right = true;
+                if (action === 'jump') keys.jump = true;
+            });
+            touchControls.addEventListener('mouseup', (e) => {
+                const btn = e.target.closest('[data-action]');
+                if (!btn) return;
+                const action = btn.getAttribute('data-action');
+                if (action === 'left') keys.left = false;
+                if (action === 'right') keys.right = false;
+                if (action === 'jump') keys.jump = false;
+            });
+            touchControls.addEventListener('mouseleave', () => {
+                keys.left = false;
+                keys.right = false;
+                keys.jump = false;
+            });
+        }
+
         function startGame() {
             if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+            document.body.classList.add('game-active');
             gameStarted = true;
             document.getElementById('startScreen').style.display = 'none';
             lastTime = Date.now();
