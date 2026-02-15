@@ -420,7 +420,7 @@
     <canvas id="gameCanvas"></canvas>
 
     <div id="ui">
-        <div id="score">❤️ Trái Tim: 0/10</div>
+        <div id="score">❤️ Trái Tim: 0/7</div>
         <div id="hint"></div>
         <div id="directionArrow"></div>
         <div id="instructions">
@@ -504,9 +504,6 @@
             "💖 Em làm cuộc sống anh ý nghĩa hơn!",
             "🌟 Anh muốn được ở bên em mãi mãi!",
             "💝 Em là tình yêu của đời anh!",
-            "🎀 Cảm ơn em đã đến bên anh!",
-            "💫 Em xinh đẹp nhất trần đời!",
-            "🌸 Anh hạnh phúc vì có em!",
             "💗 Yêu em 3000! I Love You Forever!"
         ];
 
@@ -523,48 +520,49 @@
             // Create scene
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x87ceeb);
-            scene.fog = new THREE.Fog(0x87ceeb, 10, 100);
+            // Tắt fog để tăng performance
+            // scene.fog = new THREE.Fog(0x87ceeb, 10, 100);
 
             // Create camera
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.set(0, 2, 10);
 
-            // Create renderer
+            // Create renderer - tối ưu cho performance
             renderer = new THREE.WebGLRenderer({ 
                 canvas: document.getElementById('gameCanvas'),
-                antialias: true 
+                antialias: false, // Tắt antialias để tăng FPS
+                powerPreference: "high-performance" // Ưu tiên hiệu năng
             });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.enabled = false; // Tắt shadows hoàn toàn
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // Giới hạn pixel ratio
 
-            // Add lights
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            // Add lights - tối ưu để giảm lag
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8); // Tăng ánh sáng môi trường
             scene.add(ambientLight);
 
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5); // Giảm intensity
             directionalLight.position.set(10, 20, 10);
-            directionalLight.castShadow = true;
+            directionalLight.castShadow = false; // Tắt shadow để tăng FPS
             scene.add(directionalLight);
 
-            // Add point lights for atmosphere
-            const pointLight1 = new THREE.PointLight(0xff69b4, 1, 50);
-            pointLight1.position.set(-10, 5, -10);
-            scene.add(pointLight1);
+            // Bỏ point lights để giảm lag
+            // const pointLight1 = new THREE.PointLight(0xff69b4, 1, 50);
+            // pointLight1.position.set(-10, 5, -10);
+            // scene.add(pointLight1);
 
-            const pointLight2 = new THREE.PointLight(0xff1493, 1, 50);
-            pointLight2.position.set(10, 5, 10);
-            scene.add(pointLight2);
+            // const pointLight2 = new THREE.PointLight(0xff1493, 1, 50);
+            // pointLight2.position.set(10, 5, 10);
+            // scene.add(pointLight2);
 
-            // Create ground
-            const groundGeometry = new THREE.PlaneGeometry(100, 100);
-            const groundMaterial = new THREE.MeshStandardMaterial({ 
-                color: 0x90ee90,
-                roughness: 0.8
+            // Create ground - tối ưu
+            const groundGeometry = new THREE.PlaneGeometry(100, 100, 1, 1); // Giảm segments
+            const groundMaterial = new THREE.MeshBasicMaterial({ // Dùng Basic thay vì Standard
+                color: 0x90ee90
             });
             const ground = new THREE.Mesh(groundGeometry, groundMaterial);
             ground.rotation.x = -Math.PI / 2;
             ground.position.y = -2;
-            ground.receiveShadow = true;
             scene.add(ground);
 
             // Create hearts
@@ -612,9 +610,9 @@
             const material = new THREE.MeshStandardMaterial({ 
                 color: 0xff1493,
                 emissive: 0xff1493,
-                emissiveIntensity: 0.8, // Sáng hơn
-                metalness: 0.3,
-                roughness: 0.1
+                emissiveIntensity: 1.2, // Tăng emissive thay vì dùng point light
+                metalness: 0.2,
+                roughness: 0.2
             });
 
             const heart = new THREE.Mesh(geometry, material);
@@ -622,7 +620,6 @@
             // Xoay mesh trái tim để đỉnh hướng xuống dưới (đúng hướng)
             heart.rotation.z = Math.PI; // Xoay 180 độ
             heart.scale.set(0.3, 0.3, 0.3);
-            heart.castShadow = true;
             
             // Tạo group để chứa trái tim (tránh xoay lộn xộn)
             const heartGroup = new THREE.Group();
@@ -635,17 +632,16 @@
             heartGroup.position.y = 2 + Math.random() * 8;
             heartGroup.position.z = Math.sin(angle) * radius;
             
-            // Thêm ánh sáng điểm vào mỗi trái tim để dễ thấy hơn
-            const heartLight = new THREE.PointLight(0xff1493, 2, 10);
-            heartLight.position.copy(heartGroup.position);
-            scene.add(heartLight);
+            // Bỏ point light để giảm lag, dùng emissive thay thế
+            // const heartLight = new THREE.PointLight(0xff1493, 2, 10);
+            // heartLight.position.copy(heartGroup.position);
+            // scene.add(heartLight);
             
             // Lưu thông tin vào group thay vì heart
             heartGroup.userData.collected = false;
             heartGroup.userData.initialY = heartGroup.position.y;
             heartGroup.userData.rotationSpeed = 0.02 + Math.random() * 0.02;
             heartGroup.userData.floatSpeed = 0.5 + Math.random() * 0.5;
-            heartGroup.userData.light = heartLight;
             heartGroup.userData.heartMesh = heart; // Reference đến mesh bên trong
 
             scene.add(heartGroup);
@@ -653,7 +649,7 @@
         }
 
         function createParticles() {
-            const particleCount = 200;
+            const particleCount = 80; // Giảm từ 200 xuống 80
             const geometry = new THREE.BufferGeometry();
             const positions = new Float32Array(particleCount * 3);
 
@@ -678,13 +674,13 @@
         }
 
         function createSkybox() {
-            // Add some clouds
-            for (let i = 0; i < 20; i++) {
-                const cloudGeometry = new THREE.SphereGeometry(3, 8, 8);
+            // Add some clouds - giảm số lượng để tăng FPS
+            for (let i = 0; i < 8; i++) { // Giảm từ 20 xuống 8
+                const cloudGeometry = new THREE.SphereGeometry(3, 6, 6); // Giảm segments
                 const cloudMaterial = new THREE.MeshBasicMaterial({ 
                     color: 0xffffff,
                     transparent: true,
-                    opacity: 0.6
+                    opacity: 0.5
                 });
                 const cloud = new THREE.Mesh(cloudGeometry, cloudMaterial);
                 cloud.position.set(
@@ -1085,18 +1081,9 @@
                     // Rotate the group for spin effect
                     heartGroup.rotation.y += 0.1;
                     
-                    // Fade out light
-                    if (heartGroup.userData.light) {
-                        heartGroup.userData.light.intensity = 2 * (1 - progress);
-                    }
-                    
                     requestAnimationFrame(animate);
                 } else {
                     scene.remove(heartGroup);
-                    // Remove light
-                    if (heartGroup.userData.light) {
-                        scene.remove(heartGroup.userData.light);
-                    }
                 }
             }
             animate();
@@ -1179,13 +1166,6 @@
                     const heartMesh = heartGroup.userData.heartMesh;
                     if (heartMesh) {
                         heartMesh.scale.set(0.3 * pulse, 0.3 * pulse, 0.3 * pulse);
-                    }
-                    
-                    // Update light position
-                    if (heartGroup.userData.light) {
-                        heartGroup.userData.light.position.copy(heartGroup.position);
-                        // Pulsing light intensity
-                        heartGroup.userData.light.intensity = 2 + Math.sin(Date.now() * 0.002) * 0.5;
                     }
                 }
             });
