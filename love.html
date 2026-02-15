@@ -103,6 +103,35 @@
             display: none;
         }
 
+        #levelIntro {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(102, 126, 234, 0.7);
+            border-radius: 10px;
+            z-index: 90;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        #levelIntro.show {
+            opacity: 1;
+        }
+        #levelIntro .intro-text {
+            font-size: 36px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            padding: 20px 50px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.2);
+        }
+
         .screen-title {
             font-size: 42px;
             margin-bottom: 20px;
@@ -195,7 +224,7 @@
             </div>
             <button class="screen-button" onclick="startGame()">Bắt Đầu Phiêu Lưu 💖</button>
             <div class="controls">
-                🎮 Di chuyển: ← → hoặc A D | Nhảy: ↑ hoặc W hoặc Space
+                🎮 Di chuyển: ← → hoặc A D | Nhảy: ↑ W Space (nhảy 2 lần trên không)
             </div>
         </div>
 
@@ -204,11 +233,12 @@
             <div class="screen-text">
                 Em đã hoàn thành cuộc phiêu lưu!<br>
                 Anh yêu em rất nhiều! ❤️<br>
-                Chúc mừng kỷ niệm ngày quen nhau của chúng mình!<br>
+                Thời gian: <span id="winTime">0</span>s &nbsp;|&nbsp; Kỷ lục: <span id="winBest">0</span>s<br>
                 Yêu em 3000! 💕
             </div>
             <button class="screen-button" onclick="location.reload()">Chơi Lại 🔄</button>
         </div>
+        <div id="levelIntro"></div>
     </div>
 
     <script>
@@ -225,7 +255,13 @@
             "💝 Chúc mừng kỷ niệm 14/02!",
             "💗 Forever Together! 💕",
             "🌸 Cảm ơn em đã bên anh!",
-            "💫 Yêu em 3000!"
+            "💫 Yêu em 3000!",
+            "🐕 Cùng em đi khắp nơi!",
+            "🐴 Phiêu lưu bên em mỗi ngày!",
+            "💑 Mãi bên nhau em nhé!",
+            "🌈 Cuộc đời anh có em là đủ!",
+            "🎀 Em là món quà đẹp nhất!",
+            "💒 Yêu em đến trọn đời!"
         ];
 
         // Định nghĩa 3 màn chơi
@@ -267,6 +303,7 @@
                     { x: 450, y: 298, width: 90, height: 20 },
                     { x: 600, y: 388, width: 100, height: 20 },
                     { x: 350, y: 218, width: 120, height: 20 },
+                    { x: 520, y: 218, width: 120, height: 20 },
                     { x: 700, y: 218, width: 80, height: 20 }
                 ],
                 hearts: [
@@ -290,29 +327,96 @@
                     { x: 370, y: 560, width: 150, height: 40 },
                     { x: 560, y: 560, width: 120, height: 40 },
                     { x: 720, y: 560, width: 80, height: 40 },
-                    { x: 150, y: 450, width: 80, height: 20 },
-                    { x: 320, y: 380, width: 90, height: 20 },
-                    { x: 480, y: 450, width: 80, height: 20 },
-                    { x: 620, y: 380, width: 90, height: 20 },
-                    { x: 200, y: 300, width: 70, height: 20 },
-                    { x: 400, y: 240, width: 80, height: 20 },
-                    { x: 580, y: 300, width: 70, height: 20 },
-                    { x: 380, y: 150, width: 100, height: 20 },
-                    { x: 700, y: 120, width: 80, height: 20 }
+                    { x: 150, y: 458, width: 90, height: 20 },
+                    { x: 320, y: 388, width: 95, height: 20 },
+                    { x: 480, y: 458, width: 90, height: 20 },
+                    { x: 620, y: 388, width: 95, height: 20 },
+                    { x: 195, y: 308, width: 90, height: 20 },
+                    { x: 395, y: 258, width: 90, height: 20 },
+                    { x: 575, y: 308, width: 90, height: 20 },
+                    { x: 375, y: 178, width: 110, height: 20 },
+                    { x: 545, y: 158, width: 130, height: 20 },
+                    { x: 695, y: 138, width: 90, height: 20 }
                 ],
                 hearts: [
-                    { x: 175, y: 430, width: 24, height: 24, collected: false, messageIndex: 6 },
-                    { x: 505, y: 430, width: 24, height: 24, collected: false, messageIndex: 7 },
-                    { x: 715, y: 100, width: 24, height: 24, collected: false, messageIndex: 8 }
+                    { x: 175, y: 438, width: 24, height: 24, collected: false, messageIndex: 6 },
+                    { x: 505, y: 438, width: 24, height: 24, collected: false, messageIndex: 7 },
+                    { x: 715, y: 118, width: 24, height: 24, collected: false, messageIndex: 8 }
                 ],
                 goal: { x: 730, y: 50, width: 40, height: 60 },
                 obstacles: [
                     { type: 'flower', x: 270, y: 540, width: 40, height: 50 },
                     { type: 'flower', x: 530, y: 540, width: 40, height: 50 },
-                    { type: 'cloud', x: 360, y: 360, width: 50, height: 36, startX: 320, endX: 440, speed: 0.5, offset: 0 },
-                    { type: 'cloud', x: 560, y: 280, width: 50, height: 36, startX: 520, endX: 620, speed: -0.5, offset: 0 },
-                    { type: 'star', x: 320, y: 220, width: 36, height: 36, angle: 0 },
-                    { type: 'star', x: 600, y: 270, width: 36, height: 36, angle: 0 }
+                    { type: 'cloud', x: 360, y: 378, width: 50, height: 36, startX: 320, endX: 440, speed: 0.35, offset: 0 },
+                    { type: 'cloud', x: 560, y: 288, width: 50, height: 36, startX: 520, endX: 620, speed: -0.35, offset: 0 },
+                    { type: 'star', x: 255, y: 268, width: 36, height: 36, angle: 0 },
+                    { type: 'star', x: 648, y: 228, width: 36, height: 36, angle: 0 }
+                ]
+            },
+            {
+                name: "Đồng Hành",
+                spawn: { x: 50, y: 100 },
+                platforms: [
+                    { x: 0, y: 560, width: 140, height: 40 },
+                    { x: 180, y: 560, width: 140, height: 40 },
+                    { x: 360, y: 560, width: 140, height: 40 },
+                    { x: 540, y: 560, width: 140, height: 40 },
+                    { x: 720, y: 560, width: 80, height: 40 },
+                    { x: 100, y: 448, width: 80, height: 20 },
+                    { x: 260, y: 368, width: 90, height: 20 },
+                    { x: 400, y: 448, width: 80, height: 20 },
+                    { x: 540, y: 368, width: 90, height: 20 },
+                    { x: 220, y: 268, width: 100, height: 20 },
+                    { x: 380, y: 268, width: 100, height: 20 },
+                    { x: 540, y: 268, width: 100, height: 20 },
+                    { x: 660, y: 178, width: 100, height: 20 },
+                    { x: 720, y: 88, width: 60, height: 20 }
+                ],
+                hearts: [
+                    { x: 125, y: 428, width: 24, height: 24, collected: false, messageIndex: 9 },
+                    { x: 285, y: 348, width: 24, height: 24, collected: false, messageIndex: 10 },
+                    { x: 730, y: 68, width: 24, height: 24, collected: false, messageIndex: 11 }
+                ],
+                goal: { x: 735, y: 20, width: 40, height: 60 },
+                obstacles: [
+                    { type: 'flower', x: 320, y: 540, width: 40, height: 50 },
+                    { type: 'dog', x: 120, y: 520, width: 48, height: 40, startX: 50, endX: 280, speed: 2.2, facing: 1 },
+                    { type: 'horse', x: 480, y: 520, width: 56, height: 48 }
+                ]
+            },
+            {
+                name: "Mãi Mãi",
+                spawn: { x: 50, y: 100 },
+                platforms: [
+                    { x: 0, y: 560, width: 120, height: 40 },
+                    { x: 160, y: 560, width: 120, height: 40 },
+                    { x: 320, y: 560, width: 120, height: 40 },
+                    { x: 480, y: 560, width: 120, height: 40 },
+                    { x: 640, y: 560, width: 160, height: 40 },
+                    { x: 60, y: 438, width: 70, height: 20 },
+                    { x: 200, y: 358, width: 80, height: 20 },
+                    { x: 340, y: 438, width: 70, height: 20 },
+                    { x: 480, y: 358, width: 80, height: 20 },
+                    { x: 620, y: 438, width: 70, height: 20 },
+                    { x: 180, y: 268, width: 90, height: 20 },
+                    { x: 340, y: 188, width: 90, height: 20 },
+                    { x: 500, y: 268, width: 90, height: 20 },
+                    { x: 620, y: 188, width: 90, height: 20 },
+                    { x: 380, y: 108, width: 100, height: 20 },
+                    { x: 720, y: 108, width: 80, height: 20 }
+                ],
+                hearts: [
+                    { x: 85, y: 418, width: 24, height: 24, collected: false, messageIndex: 12 },
+                    { x: 365, y: 168, width: 24, height: 24, collected: false, messageIndex: 13 },
+                    { x: 735, y: 88, width: 24, height: 24, collected: false, messageIndex: 14 }
+                ],
+                goal: { x: 735, y: 30, width: 40, height: 60 },
+                obstacles: [
+                    { type: 'dog', x: 180, y: 520, width: 48, height: 40, startX: 160, endX: 420, speed: 2.5, facing: 1 },
+                    { type: 'dog', x: 520, y: 520, width: 48, height: 40, startX: 480, endX: 780, speed: -2.2, facing: -1 },
+                    { type: 'horse', x: 340, y: 518, width: 56, height: 48 },
+                    { type: 'cloud', x: 400, y: 318, width: 50, height: 36, startX: 340, endX: 500, speed: 0.4, offset: 0 },
+                    { type: 'star', x: 200, y: 228, width: 36, height: 36, angle: 0 }
                 ]
             }
         ];
@@ -348,6 +452,62 @@
         };
 
         const keys = { left: false, right: false, jump: false };
+        let canDoubleJump = false;
+        let levelIntroUntil = 0;
+        let screenShake = 0;
+        const SHAKE_DURATION = 20;
+
+        // Audio (Web Audio API - không cần file)
+        let audioCtx = null;
+        function getAudioContext() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            return audioCtx;
+        }
+        function playTone(freq, duration, type, volume) {
+            try {
+                const ctx = getAudioContext();
+                if (ctx.state === 'suspended') ctx.resume();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = freq;
+                osc.type = type || 'sine';
+                gain.gain.setValueAtTime(volume || 0.12, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + duration);
+            } catch (_) {}
+        }
+        function playJump() {
+            playTone(520, 0.08, 'sine', 0.08);
+            setTimeout(() => playTone(680, 0.06, 'sine', 0.06), 40);
+        }
+        function playDoubleJump() {
+            playTone(400, 0.05, 'sine', 0.06);
+            setTimeout(() => playTone(600, 0.07, 'sine', 0.07), 30);
+        }
+        function playCollectHeart() {
+            playTone(523, 0.06, 'sine', 0.08);
+            setTimeout(() => playTone(659, 0.06, 'sine', 0.07), 50);
+            setTimeout(() => playTone(784, 0.12, 'sine', 0.08), 100);
+        }
+        function playHit() {
+            playTone(150, 0.15, 'sawtooth', 0.1);
+            setTimeout(() => playTone(100, 0.2, 'sawtooth', 0.08), 80);
+        }
+        function playLevelComplete() {
+            playTone(523, 0.12, 'sine', 0.1);
+            setTimeout(() => playTone(659, 0.12, 'sine', 0.09), 120);
+            setTimeout(() => playTone(784, 0.12, 'sine', 0.09), 240);
+            setTimeout(() => playTone(1047, 0.2, 'sine', 0.1), 360);
+        }
+        function playWin() {
+            const notes = [523, 659, 784, 1047, 784, 1047];
+            notes.forEach((freq, i) => {
+                setTimeout(() => playTone(freq, 0.25, 'sine', 0.1), i * 180);
+            });
+        }
 
         function loadLevel(index) {
             const level = LEVELS[index];
@@ -365,6 +525,8 @@
             player.speedX = 0;
             player.speedY = 0;
             invincibleUntil = Date.now() + INVINCIBLE_DURATION;
+            levelIntroUntil = Date.now() + 2200;
+            canDoubleJump = false;
             document.getElementById('hearts').textContent = `0/${totalHeartsLevel}`;
             document.getElementById('levelName').textContent = level.name + ' 💕';
         }
@@ -432,6 +594,7 @@
         });
 
         function startGame() {
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
             gameStarted = true;
             document.getElementById('startScreen').style.display = 'none';
             lastTime = Date.now();
@@ -450,6 +613,15 @@
                 if (obs.type === 'star') {
                     obs.angle = (obs.angle || 0) + 0.08;
                 }
+                if (obs.type === 'dog') {
+                    obs.x += (obs.speed || 2) * (obs.facing || 1);
+                    if (obs.facing === 1 && obs.x >= (obs.endX || obs.x + 100)) {
+                        obs.facing = -1;
+                    }
+                    if (obs.facing === -1 && obs.x <= (obs.startX || obs.x - 100)) {
+                        obs.facing = 1;
+                    }
+                }
             });
         }
 
@@ -467,6 +639,12 @@
             if (keys.jump && player.onGround) {
                 player.speedY = player.jumpPower;
                 player.onGround = false;
+                canDoubleJump = true;
+                playJump();
+            } else if (keys.jump && canDoubleJump && player.speedY > -8) {
+                player.speedY = player.jumpPower * 0.85;
+                canDoubleJump = false;
+                playDoubleJump();
             }
 
             player.speedY += player.gravity;
@@ -483,6 +661,7 @@
                     player.y = platform.y - player.height;
                     player.speedY = 0;
                     player.onGround = true;
+                    canDoubleJump = true;
                 }
             });
 
@@ -490,6 +669,7 @@
             if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
             
             if (player.y > canvas.height) {
+                playHit();
                 respawn();
             }
         }
@@ -523,6 +703,8 @@
                     if (px + pw > obs.x && px < obs.x + obs.width && py + ph > obs.y && py < obs.y + obs.height) hit = true;
                 }
                 if (hit) {
+                    screenShake = SHAKE_DURATION;
+                    playHit();
                     respawn();
                     createParticles(player.x + player.width / 2, player.y + player.height / 2, '#ff9999');
                 }
@@ -541,6 +723,7 @@
                     document.getElementById('hearts').textContent = `${heartsCollected}/${totalHeartsLevel}`;
                     showMessage(loveMessages[heart.messageIndex]);
                     createParticles(heart.x + heart.width / 2, heart.y + heart.height / 2, '#ff1493');
+                    playCollectHeart();
                 }
             });
 
@@ -551,11 +734,13 @@
                 player.y < goal.y + goal.height) {
                 if (currentLevel < LEVELS.length - 1) {
                     levelTransitioning = true;
+                    playLevelComplete();
                     showMessage('🎉 Màn tiếp theo! 💕');
                     setTimeout(() => {
                         loadLevel(currentLevel + 1);
                     }, 1800);
                 } else {
+                    playWin();
                     winGame();
                 }
             }
@@ -573,8 +758,21 @@
 
         function winGame() {
             gameStarted = false;
+            const bestKey = 'loveAdventureBestTime';
+            const best = localStorage.getItem(bestKey);
+            const current = gameTime;
+            if (best === null || current < parseInt(best, 10)) {
+                localStorage.setItem(bestKey, String(current));
+            }
+            document.getElementById('winTime').textContent = current;
+            document.getElementById('winBest').textContent = best ? Math.min(current, parseInt(best, 10)) : current;
             document.getElementById('winScreen').style.display = 'flex';
-            createParticles(goal.x + goal.width / 2, goal.y + goal.height / 2, '#ffd700');
+            const colors = ['#ff1493', '#ff69b4', '#ffd700', '#fff'];
+            for (let i = 0; i < 40; i++) {
+                setTimeout(() => {
+                    createParticles(400 + (Math.random() - 0.5) * 200, 300, colors[i % 4]);
+                }, i * 30);
+            }
         }
 
         function drawObstacles() {
@@ -696,6 +894,89 @@
                     ctx.beginPath();
                     ctx.arc(-2, -2, 2, 0, Math.PI * 2);
                     ctx.arc(2, 1, 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (obs.type === 'dog') {
+                    ctx.translate(obs.x + obs.width / 2, obs.y + obs.height / 2);
+                    if ((obs.facing || 1) === -1) ctx.scale(-1, 1);
+                    ctx.translate(-obs.width / 2, -obs.height / 2);
+                    const w = obs.width, h = obs.height;
+                    ctx.fillStyle = '#8D6E63';
+                    ctx.fillRect(4, h * 0.5, w - 8, h * 0.45);
+                    ctx.fillStyle = '#A1887F';
+                    ctx.beginPath();
+                    ctx.ellipse(w * 0.25, h * 0.35, 10, 12, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#5D4037';
+                    ctx.beginPath();
+                    ctx.ellipse(w * 0.22, h * 0.28, 4, 5, 0, 0, Math.PI * 2);
+                    ctx.ellipse(w * 0.32, h * 0.28, 4, 5, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#8D6E63';
+                    ctx.beginPath();
+                    ctx.moveTo(w * 0.12, h * 0.2);
+                    ctx.lineTo(w * 0.02, h * 0.05);
+                    ctx.lineTo(w * 0.18, h * 0.15);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(w * 0.88, h * 0.2);
+                    ctx.lineTo(w * 0.98, h * 0.05);
+                    ctx.lineTo(w * 0.82, h * 0.15);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.fillStyle = '#FFAB91';
+                    ctx.beginPath();
+                    ctx.ellipse(w * 0.5, h * 0.75, 6, 4, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#5D4037';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    const tailY = h * 0.55 + Math.sin(Date.now() * 0.008) * 4;
+                    ctx.moveTo(w - 2, h * 0.5);
+                    ctx.quadraticCurveTo(w + 14, tailY, w + 8, h * 0.4);
+                    ctx.stroke();
+                } else if (obs.type === 'horse') {
+                    ctx.translate(obs.x + obs.width / 2, obs.y + obs.height / 2);
+                    const w = obs.width, h = obs.height;
+                    ctx.translate(-w / 2, -h / 2);
+                    ctx.fillStyle = '#6D4C41';
+                    ctx.fillRect(8, h * 0.4, w - 16, h * 0.5);
+                    ctx.fillStyle = '#8D6E63';
+                    ctx.beginPath();
+                    ctx.ellipse(w * 0.35, h * 0.25, 14, 16, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#5D4037';
+                    ctx.beginPath();
+                    ctx.ellipse(w * 0.3, h * 0.18, 5, 6, 0, 0, Math.PI * 2);
+                    ctx.ellipse(w * 0.42, h * 0.18, 5, 6, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#8D6E63';
+                    ctx.beginPath();
+                    ctx.moveTo(w * 0.5, h * 0.12);
+                    ctx.lineTo(w * 0.72, h * 0.08);
+                    ctx.lineTo(w * 0.68, h * 0.22);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.fillStyle = '#5D4037';
+                    ctx.beginPath();
+                    ctx.arc(w * 0.72, h * 0.1, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#A1887F';
+                    ctx.beginPath();
+                    ctx.moveTo(w * 0.15, h * 0.55);
+                    ctx.lineTo(w * 0.08, h * 0.92);
+                    ctx.lineTo(w * 0.22, h * 0.9);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(w * 0.85, h * 0.55);
+                    ctx.lineTo(w * 0.92, h * 0.92);
+                    ctx.lineTo(w * 0.78, h * 0.9);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.fillStyle = '#FFAB91';
+                    ctx.beginPath();
+                    ctx.ellipse(w * 0.5, h * 0.88, 8, 5, 0, 0, Math.PI * 2);
                     ctx.fill();
                 }
                 ctx.restore();
@@ -842,20 +1123,39 @@
             ctx.arc(650 + Math.sin(Date.now() * 0.0003) * 15, 120, 25, 0, Math.PI * 2);
             ctx.fill();
             
-            // Hearts in background
-            ctx.fillStyle = 'rgba(255, 20, 147, 0.1)';
-            for (let i = 0; i < 5; i++) {
-                const x = (i * 180 + Date.now() * 0.02) % canvas.width;
-                const y = 50 + Math.sin(Date.now() * 0.001 + i) * 30;
+            // Hearts in background (nhiều hơn, đẹp hơn)
+            const t = Date.now() * 0.001;
+            for (let i = 0; i < 12; i++) {
+                const x = ((i * 70 + t * 15) % (canvas.width + 40)) - 20;
+                const y = 40 + Math.sin(t + i * 0.7) * 25 + (i % 3) * 15;
+                ctx.fillStyle = `rgba(255, 20, 147, ${0.06 + Math.sin(t * 2 + i) * 0.04})`;
                 ctx.beginPath();
-                ctx.arc(x - 5, y, 8, 0, Math.PI * 2);
-                ctx.arc(x + 5, y, 8, 0, Math.PI * 2);
+                ctx.moveTo(x, y + 4);
+                ctx.bezierCurveTo(x - 4, y - 2, x - 6, y - 2, x - 6, y + 2);
+                ctx.bezierCurveTo(x - 6, y + 6, x, y + 10, x, y + 10);
+                ctx.bezierCurveTo(x, y + 10, x + 6, y + 6, x + 6, y + 2);
+                ctx.bezierCurveTo(x + 6, y - 2, x + 4, y - 2, x, y + 4);
                 ctx.fill();
+            }
+        }
+
+        function drawLevelIntro() {
+            const el = document.getElementById('levelIntro');
+            if (Date.now() < levelIntroUntil && currentLevel >= 0) {
+                const level = LEVELS[currentLevel];
+                if (level && !el.classList.contains('show')) {
+                    el.classList.add('show');
+                    el.innerHTML = '<span class="intro-text">💕 ' + level.name + ' 💕</span>';
+                }
+            } else {
+                el.classList.remove('show');
             }
         }
 
         function gameLoop() {
             if (!gameStarted) return;
+
+            drawLevelIntro();
 
             // Update timer
             const now = Date.now();
@@ -865,8 +1165,18 @@
                 lastTime = now;
             }
 
+            // Screen shake
+            let shakeX = 0, shakeY = 0;
+            if (screenShake > 0) {
+                shakeX = (Math.random() - 0.5) * 8;
+                shakeY = (Math.random() - 0.5) * 8;
+                screenShake--;
+            }
+            ctx.save();
+            ctx.translate(shakeX, shakeY);
+
             // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(-10, -10, canvas.width + 20, canvas.height + 20);
 
             // Draw
             drawBackground();
@@ -884,6 +1194,7 @@
             checkObstacleCollision();
             checkCollisions();
 
+            ctx.restore();
             requestAnimationFrame(gameLoop);
         }
 
