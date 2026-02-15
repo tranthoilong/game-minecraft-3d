@@ -460,7 +460,7 @@
         let hearts = [];
         let particles = [];
         let score = 0;
-        const totalHearts = 10;
+        const totalHearts = 7; // Giảm xuống để game mượt hơn
         let gameStarted = false;
 
         // Device detection
@@ -480,7 +480,7 @@
 
         const velocity = new THREE.Vector3();
         const moveSpeed = isMobile ? 0.2 : 0.3; // Chậm hơn trên mobile
-        const rotateSpeed = isMobile ? 0.003 : 0.002;
+        const rotateSpeed = isMobile ? 0.002 : 0.0015; // Giảm độ nhạy để ổn định hơn
 
         // Mouse movement
         let mouseX = 0, mouseY = 0;
@@ -619,31 +619,37 @@
 
             const heart = new THREE.Mesh(geometry, material);
             
-            // Xoay trái tim để đỉnh hướng xuống dưới (đúng hướng)
+            // Xoay mesh trái tim để đỉnh hướng xuống dưới (đúng hướng)
             heart.rotation.z = Math.PI; // Xoay 180 độ
+            heart.scale.set(0.3, 0.3, 0.3);
+            heart.castShadow = true;
+            
+            // Tạo group để chứa trái tim (tránh xoay lộn xộn)
+            const heartGroup = new THREE.Group();
+            heartGroup.add(heart);
+            
+            // Random position cho group
+            const angle = (index / totalHearts) * Math.PI * 2;
+            const radius = 15 + Math.random() * 10;
+            heartGroup.position.x = Math.cos(angle) * radius;
+            heartGroup.position.y = 2 + Math.random() * 8;
+            heartGroup.position.z = Math.sin(angle) * radius;
             
             // Thêm ánh sáng điểm vào mỗi trái tim để dễ thấy hơn
             const heartLight = new THREE.PointLight(0xff1493, 2, 10);
-            heartLight.position.copy(heart.position);
+            heartLight.position.copy(heartGroup.position);
             scene.add(heartLight);
-            heart.userData.light = heartLight;
             
-            // Random position
-            const angle = (index / totalHearts) * Math.PI * 2;
-            const radius = 15 + Math.random() * 10;
-            heart.position.x = Math.cos(angle) * radius;
-            heart.position.y = 2 + Math.random() * 8;
-            heart.position.z = Math.sin(angle) * radius;
-            
-            heart.scale.set(0.3, 0.3, 0.3);
-            heart.castShadow = true;
-            heart.userData.collected = false;
-            heart.userData.initialY = heart.position.y;
-            heart.userData.rotationSpeed = 0.02 + Math.random() * 0.02;
-            heart.userData.floatSpeed = 0.5 + Math.random() * 0.5;
+            // Lưu thông tin vào group thay vì heart
+            heartGroup.userData.collected = false;
+            heartGroup.userData.initialY = heartGroup.position.y;
+            heartGroup.userData.rotationSpeed = 0.02 + Math.random() * 0.02;
+            heartGroup.userData.floatSpeed = 0.5 + Math.random() * 0.5;
+            heartGroup.userData.light = heartLight;
+            heartGroup.userData.heartMesh = heart; // Reference đến mesh bên trong
 
-            scene.add(heart);
-            hearts.push(heart);
+            scene.add(heartGroup);
+            hearts.push(heartGroup);
         }
 
         function createParticles() {
@@ -772,8 +778,9 @@
             mouseX = event.movementX || 0;
             mouseY = event.movementY || 0;
             
-            targetRotationY -= mouseX * rotateSpeed;
-            targetRotationX -= mouseY * rotateSpeed;
+            // Giảm độ nhạy để camera ổn định, không lắc
+            targetRotationY -= mouseX * rotateSpeed * 0.8;
+            targetRotationX -= mouseY * rotateSpeed * 0.8;
             targetRotationX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, targetRotationX));
         }
 
@@ -878,8 +885,9 @@
                     const deltaX = touch.clientX - touchStartX;
                     const deltaY = touch.clientY - touchStartY;
 
-                    targetRotationY -= deltaX * rotateSpeed * 0.5;
-                    targetRotationX -= deltaY * rotateSpeed * 0.5;
+                    // Giảm độ nhạy cho mượt hơn, không lắc
+                    targetRotationY -= deltaX * rotateSpeed * 0.3;
+                    targetRotationX -= deltaY * rotateSpeed * 0.3;
                     targetRotationX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, targetRotationX));
 
                     touchStartX = touch.clientX;
@@ -889,31 +897,57 @@
         }
 
         function updateMovement() {
-            velocity.x = 0;
-            velocity.y = 0;
-            velocity.z = 0;
+            // Khi bay lên/xuống, tự động san bằng camera và giữ ổn định
+            if (movement.up || movement.down) {
+                // Lerp về góc 0 (nhìn thẳng) khi bay
+                targetRotationX *= 0.85;
+                // Giữ hướng ngang ổn định khi bay (không cho xoay trái phải)
+                targetRotationY = camera.rotation.y;
+            }
 
-            if (movement.forward) velocity.z -= moveSpeed;
-            if (movement.backward) velocity.z += moveSpeed;
-            if (movement.left) velocity.x -= moveSpeed;
-            if (movement.right) velocity.x += moveSpeed;
-            if (movement.up) velocity.y += moveSpeed;
-            if (movement.down) velocity.y -= moveSpeed;
+            // Apply rotation to camera - smooth interpolation với lerp cao hơn để ổn định
+            camera.rotation.y += (targetRotationY - camera.rotation.y) * 0.2;
+            camera.rotation.x += (targetRotationX - camera.rotation.x) * 0.2;
 
-            // Apply rotation to camera
-            camera.rotation.y = targetRotationY;
-            camera.rotation.x = targetRotationX;
-
-            // Move camera based on its rotation
-            const direction = new THREE.Vector3();
-            camera.getWorldDirection(direction);
-            
+            // Tính toán hướng di chuyển dựa trên camera rotation (chỉ Y, bỏ qua X để bay thẳng)
+            const forward = new THREE.Vector3();
             const right = new THREE.Vector3();
-            right.crossVectors(camera.up, direction).normalize();
+            
+            // Forward direction (hướng nhìn, bỏ qua góc lên/xuống)
+            forward.set(
+                -Math.sin(camera.rotation.y), // Đổi dấu để đi đúng hướng
+                0,
+                -Math.cos(camera.rotation.y)  // Đổi dấu để đi đúng hướng
+            );
+            forward.normalize();
+            
+            // Right direction (vuông góc với forward)
+            right.set(
+                Math.cos(camera.rotation.y),  // Right = forward xoay 90 độ
+                0,
+                -Math.sin(camera.rotation.y)
+            );
+            right.normalize();
 
-            camera.position.addScaledVector(direction, -velocity.z);
-            camera.position.addScaledVector(right, -velocity.x);
-            camera.position.y += velocity.y;
+            // Di chuyển camera
+            if (movement.forward) {
+                camera.position.addScaledVector(forward, moveSpeed);
+            }
+            if (movement.backward) {
+                camera.position.addScaledVector(forward, -moveSpeed);
+            }
+            if (movement.right) {
+                camera.position.addScaledVector(right, moveSpeed);
+            }
+            if (movement.left) {
+                camera.position.addScaledVector(right, -moveSpeed);
+            }
+            if (movement.up) {
+                camera.position.y += moveSpeed;
+            }
+            if (movement.down) {
+                camera.position.y -= moveSpeed;
+            }
 
             // Keep camera above ground
             if (camera.position.y < 0) camera.position.y = 0;
@@ -1032,8 +1066,9 @@
             }
         }
 
-        function animateHeartCollection(heart) {
-            const startScale = heart.scale.clone();
+        function animateHeartCollection(heartGroup) {
+            const heartMesh = heartGroup.userData.heartMesh;
+            const startScale = heartMesh ? heartMesh.scale.clone() : new THREE.Vector3(0.3, 0.3, 0.3);
             const duration = 500;
             const startTime = Date.now();
 
@@ -1042,20 +1077,25 @@
                 const progress = elapsed / duration;
 
                 if (progress < 1) {
-                    heart.scale.lerpVectors(startScale, new THREE.Vector3(0, 0, 0), progress);
-                    heart.rotation.y += 0.1;
+                    // Scale down the mesh inside the group
+                    if (heartMesh) {
+                        heartMesh.scale.lerpVectors(startScale, new THREE.Vector3(0, 0, 0), progress);
+                    }
+                    
+                    // Rotate the group for spin effect
+                    heartGroup.rotation.y += 0.1;
                     
                     // Fade out light
-                    if (heart.userData.light) {
-                        heart.userData.light.intensity = 2 * (1 - progress);
+                    if (heartGroup.userData.light) {
+                        heartGroup.userData.light.intensity = 2 * (1 - progress);
                     }
                     
                     requestAnimationFrame(animate);
                 } else {
-                    scene.remove(heart);
+                    scene.remove(heartGroup);
                     // Remove light
-                    if (heart.userData.light) {
-                        scene.remove(heart.userData.light);
+                    if (heartGroup.userData.light) {
+                        scene.remove(heartGroup.userData.light);
                     }
                 }
             }
@@ -1125,21 +1165,27 @@
             updateMovement();
 
             // Animate hearts
-            hearts.forEach((heart, index) => {
-                if (!heart.userData.collected) {
-                    heart.rotation.y += heart.userData.rotationSpeed;
-                    heart.position.y = heart.userData.initialY + 
-                        Math.sin(Date.now() * 0.001 * heart.userData.floatSpeed) * 0.5;
+            hearts.forEach((heartGroup, index) => {
+                if (!heartGroup.userData.collected) {
+                    // Xoay group theo trục Y (không ảnh hưởng đến rotation.z của mesh bên trong)
+                    heartGroup.rotation.y += heartGroup.userData.rotationSpeed;
                     
-                    // Pulsing effect
+                    // Float up and down
+                    heartGroup.position.y = heartGroup.userData.initialY + 
+                        Math.sin(Date.now() * 0.001 * heartGroup.userData.floatSpeed) * 0.5;
+                    
+                    // Pulsing effect - chỉ scale mesh bên trong
                     const pulse = 1 + Math.sin(Date.now() * 0.003) * 0.15;
-                    heart.scale.set(0.3 * pulse, 0.3 * pulse, 0.3 * pulse);
+                    const heartMesh = heartGroup.userData.heartMesh;
+                    if (heartMesh) {
+                        heartMesh.scale.set(0.3 * pulse, 0.3 * pulse, 0.3 * pulse);
+                    }
                     
                     // Update light position
-                    if (heart.userData.light) {
-                        heart.userData.light.position.copy(heart.position);
+                    if (heartGroup.userData.light) {
+                        heartGroup.userData.light.position.copy(heartGroup.position);
                         // Pulsing light intensity
-                        heart.userData.light.intensity = 2 + Math.sin(Date.now() * 0.002) * 0.5;
+                        heartGroup.userData.light.intensity = 2 + Math.sin(Date.now() * 0.002) * 0.5;
                     }
                 }
             });
