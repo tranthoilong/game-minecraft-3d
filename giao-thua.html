@@ -539,10 +539,202 @@
             background: currentColor;
             box-shadow: 0 0 6px currentColor;
         }
+
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .combo-badge {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: 900;
+            color: #ffd700;
+            text-shadow: 
+                0 0 20px rgba(255, 215, 0, 1),
+                0 0 40px rgba(255, 69, 0, 1),
+                0 4px 8px rgba(0, 0, 0, 0.8);
+            pointer-events: none;
+            z-index: 200;
+            animation: comboPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes comboPop {
+            0% { 
+                opacity: 0; 
+                transform: translate(-50%, -50%) scale(0.3);
+            }
+            50% { 
+                opacity: 1; 
+                transform: translate(-50%, -50%) scale(1.2);
+            }
+            100% { 
+                opacity: 0; 
+                transform: translate(-50%, -50%) scale(0.8) translateY(-30px);
+            }
+        }
+
+        .bao-li-xi.golden {
+            background: linear-gradient(145deg, #ffd700, #ffaa00);
+            border: 3px solid #fff;
+            box-shadow:
+                0 8px 18px rgba(0, 0, 0, 0.7),
+                0 0 24px rgba(255, 215, 0, 1),
+                0 0 40px rgba(255, 215, 0, 0.6);
+            animation: float 2.4s ease-in-out infinite, pulse 1s ease-in-out infinite;
+        }
+
+        .bao-li-xi.golden::before {
+            content: "💰";
+            font-size: 28px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                box-shadow:
+                    0 8px 18px rgba(0, 0, 0, 0.7),
+                    0 0 24px rgba(255, 215, 0, 1),
+                    0 0 40px rgba(255, 215, 0, 0.6);
+            }
+            50% { 
+                box-shadow:
+                    0 8px 18px rgba(0, 0, 0, 0.7),
+                    0 0 32px rgba(255, 215, 0, 1),
+                    0 0 60px rgba(255, 215, 0, 0.8);
+            }
+        }
+
+        .shake {
+            animation: shake 0.3s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        .countdown-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .countdown-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .countdown-number {
+            font-size: 120px;
+            font-weight: 900;
+            color: #ffd700;
+            text-shadow: 
+                0 0 30px rgba(255, 215, 0, 1),
+                0 0 60px rgba(255, 69, 0, 1),
+                0 8px 16px rgba(0, 0, 0, 0.9);
+            animation: countdownPulse 1s ease-out;
+        }
+
+        @keyframes countdownPulse {
+            0% { 
+                transform: scale(0.5); 
+                opacity: 0;
+            }
+            50% { 
+                transform: scale(1.2); 
+                opacity: 1;
+            }
+            100% { 
+                transform: scale(1); 
+                opacity: 1;
+            }
+        }
+
+        .audio-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+            z-index: 100;
+            transition: all 0.2s ease;
+        }
+
+        .audio-toggle:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: scale(1.1);
+            border-color: rgba(255, 215, 0, 0.8);
+        }
+
+        .combo-meter {
+            position: absolute;
+            top: 50%;
+            right: 16px;
+            transform: translateY(-50%);
+            padding: 8px 12px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ffd700;
+            font-size: 14px;
+            font-weight: 700;
+            color: #ffd700;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+
+        .combo-meter.active {
+            opacity: 1;
+        }
+
+        .combo-meter-value {
+            font-size: 24px;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .combo-meter-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
 <div class="overlay"></div>
+
+<div class="countdown-overlay" id="countdownOverlay">
+    <div class="countdown-number" id="countdownNumber">3</div>
+</div>
+
+<div class="audio-toggle" id="audioToggle" title="Bật/Tắt âm thanh">
+    🔊
+</div>
 
 <div class="container">
     <main class="card" aria-label="Trò chơi đêm giao thừa Săn Bao Lì Xì">
@@ -591,6 +783,10 @@
             <div class="game-area" id="gameArea" aria-live="polite">
                 <div class="game-area-inner">
                     <div class="game-hint">Bấm vào bao lì xì để nhận điểm</div>
+                    <div class="combo-meter" id="comboMeter">
+                        <span class="combo-meter-value" id="comboValue">0</span>
+                        <span class="combo-meter-label">Combo</span>
+                    </div>
                     <div class="lantern" style="left: 16px;">
                         <span></span>
                     </div>
@@ -661,6 +857,9 @@
         const DURATION = 30; // giây
         const MAX_BAO = 6;
         const SPAWN_INTERVAL = 650; // ms
+        const GOLDEN_CHANCE = 0.15; // 15% cơ hội bao vàng
+        const COMBO_TIMEOUT = 2000; // 2 giây để duy trì combo
+        
         const gameArea = document.getElementById("gameArea");
         const startBtn = document.getElementById("startBtn");
         const resetBestBtn = document.getElementById("resetBestBtn");
@@ -670,6 +869,11 @@
         const resultBanner = document.getElementById("resultBanner");
         const resultMain = document.getElementById("resultMain");
         const resultSub = document.getElementById("resultSub");
+        const countdownOverlay = document.getElementById("countdownOverlay");
+        const countdownNumber = document.getElementById("countdownNumber");
+        const audioToggle = document.getElementById("audioToggle");
+        const comboMeter = document.getElementById("comboMeter");
+        const comboValue = document.getElementById("comboValue");
 
         let timeLeft = DURATION;
         let score = 0;
@@ -677,6 +881,195 @@
         let timerId = null;
         let spawnId = null;
         let isPlaying = false;
+        let combo = 0;
+        let comboTimer = null;
+        let audioEnabled = true;
+        let audioContext = null;
+
+        // Khởi tạo Audio Context
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // Tạo âm thanh click
+        function playClickSound(isGolden = false) {
+            if (!audioEnabled || !audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            if (isGolden) {
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.1);
+            } else {
+                oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(900, audioContext.currentTime + 0.1);
+            }
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+
+        // Tạo âm thanh combo
+        function playComboSound(comboLevel) {
+            if (!audioEnabled || !audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            const baseFreq = 400 + (comboLevel * 50);
+            oscillator.frequency.setValueAtTime(baseFreq, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, audioContext.currentTime + 0.15);
+            
+            gainNode.gain.setValueAtTime(0.25, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.15);
+        }
+
+        // Tạo âm thanh countdown
+        function playCountdownSound(isGo = false) {
+            if (!audioEnabled || !audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            if (isGo) {
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.3);
+            } else {
+                oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+            }
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+        }
+
+        // Tạo âm thanh kết thúc
+        function playEndSound() {
+            if (!audioEnabled || !audioContext) return;
+            
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(600 + (i * 200), audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.5);
+                }, i * 100);
+            }
+        }
+
+        // Tạo hiệu ứng hạt
+        function createParticles(x, y, color = "#ffd700", count = 12) {
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement("div");
+                particle.className = "particle";
+                particle.style.left = x + "px";
+                particle.style.top = y + "px";
+                particle.style.background = color;
+                
+                const angle = (Math.PI * 2 * i) / count;
+                const velocity = 60 + Math.random() * 40;
+                const dx = Math.cos(angle) * velocity;
+                const dy = Math.sin(angle) * velocity;
+                
+                particle.animate([
+                    { 
+                        transform: "translate(0, 0) scale(1)", 
+                        opacity: 1 
+                    },
+                    { 
+                        transform: `translate(${dx}px, ${dy}px) scale(0)`, 
+                        opacity: 0 
+                    }
+                ], {
+                    duration: 600 + Math.random() * 200,
+                    easing: "cubic-bezier(0.2, 0.8, 0.2, 1)"
+                });
+                
+                gameArea.appendChild(particle);
+                setTimeout(() => particle.remove(), 800);
+            }
+        }
+
+        // Hiển thị combo badge
+        function showComboBadge(comboCount) {
+            const badge = document.createElement("div");
+            badge.className = "combo-badge";
+            
+            if (comboCount >= 10) {
+                badge.textContent = "🔥 COMBO x" + comboCount + "!";
+            } else if (comboCount >= 5) {
+                badge.textContent = "⚡ COMBO x" + comboCount;
+            } else if (comboCount >= 3) {
+                badge.textContent = "✨ x" + comboCount;
+            }
+            
+            if (comboCount >= 3) {
+                document.body.appendChild(badge);
+                setTimeout(() => badge.remove(), 600);
+            }
+        }
+
+        // Cập nhật combo
+        function updateCombo() {
+            combo += 1;
+            comboValue.textContent = combo;
+            
+            if (combo >= 3) {
+                comboMeter.classList.add("active");
+                showComboBadge(combo);
+                playComboSound(Math.min(combo, 10));
+            }
+            
+            // Reset combo timer
+            if (comboTimer) {
+                clearTimeout(comboTimer);
+            }
+            
+            comboTimer = setTimeout(() => {
+                combo = 0;
+                comboValue.textContent = "0";
+                comboMeter.classList.remove("active");
+            }, COMBO_TIMEOUT);
+        }
+
+        // Reset combo
+        function resetCombo() {
+            combo = 0;
+            comboValue.textContent = "0";
+            comboMeter.classList.remove("active");
+            if (comboTimer) {
+                clearTimeout(comboTimer);
+                comboTimer = null;
+            }
+        }
 
         function loadBest() {
             try {
@@ -712,31 +1105,59 @@
             const x = randomBetween(margin, rect.width - margin - 54);
             const y = randomBetween(40, rect.height - margin - 82);
 
+            const isGolden = Math.random() < GOLDEN_CHANCE;
+
             const bao = document.createElement("button");
             bao.type = "button";
-            bao.className = "bao-li-xi";
+            bao.className = "bao-li-xi" + (isGolden ? " golden" : "");
             bao.style.left = x + "px";
             bao.style.top = y + "px";
-            bao.setAttribute("aria-label", "Bao lì xì - bấm để nhận điểm");
+            bao.setAttribute("aria-label", isGolden ? "Bao lì xì vàng - bấm để nhận 3 điểm!" : "Bao lì xì - bấm để nhận điểm");
 
-            const small = document.createElement("small");
-            small.textContent = "+1 may mắn";
-            bao.appendChild(small);
+            if (!isGolden) {
+                const small = document.createElement("small");
+                small.textContent = "+1 may mắn";
+                bao.appendChild(small);
+            } else {
+                const small = document.createElement("small");
+                small.textContent = "+3 điểm";
+                bao.appendChild(small);
+            }
 
             bao.addEventListener("click", function (event) {
                 if (!isPlaying) return;
-                score += 1;
+                
+                const points = isGolden ? 3 : 1;
+                score += points;
                 scoreValue.textContent = String(score);
+
+                // Cập nhật combo
+                updateCombo();
+
+                // Phát âm thanh
+                playClickSound(isGolden);
 
                 bao.classList.add("bao-pop");
 
-                const fx = document.createElement("div");
-                fx.className = "score-float";
                 const bounds = bao.getBoundingClientRect();
                 const gameBounds = gameArea.getBoundingClientRect();
-                fx.textContent = "+1";
-                fx.style.left = bounds.left - gameBounds.left + bounds.width / 2 - 6 + "px";
-                fx.style.top = bounds.top - gameBounds.top + "px";
+                const centerX = bounds.left - gameBounds.left + bounds.width / 2;
+                const centerY = bounds.top - gameBounds.top + bounds.height / 2;
+
+                // Tạo hiệu ứng hạt
+                const particleColor = isGolden ? "#ffd700" : "#ff4500";
+                createParticles(centerX, centerY, particleColor, isGolden ? 16 : 12);
+
+                // Hiệu ứng điểm bay lên
+                const fx = document.createElement("div");
+                fx.className = "score-float";
+                fx.textContent = "+" + points;
+                fx.style.left = centerX - 10 + "px";
+                fx.style.top = centerY - 10 + "px";
+                if (isGolden) {
+                    fx.style.color = "#ffd700";
+                    fx.style.fontSize = "20px";
+                }
 
                 gameArea.appendChild(fx);
 
@@ -752,25 +1173,53 @@
         }
 
         function clearBao() {
-            gameArea.querySelectorAll(".bao-li-xi, .score-float").forEach(el => el.remove());
+            gameArea.querySelectorAll(".bao-li-xi, .score-float, .particle").forEach(el => el.remove());
+            resetCombo();
         }
 
-        function startGame() {
+        async function startGame() {
             if (isPlaying) return;
+            
+            initAudio();
+            
+            startBtn.textContent = "Đang chuẩn bị...";
+            startBtn.disabled = true;
+            resultBanner.style.display = "none";
+            clearBao();
+
+            // Countdown 3, 2, 1, GO!
+            countdownOverlay.classList.add("active");
+            
+            for (let i = 3; i >= 1; i--) {
+                countdownNumber.textContent = i;
+                playCountdownSound(false);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            countdownNumber.textContent = "BẮT ĐẦU!";
+            playCountdownSound(true);
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            countdownOverlay.classList.remove("active");
+
+            // Bắt đầu game
             isPlaying = true;
             timeLeft = DURATION;
             score = 0;
             scoreValue.textContent = "0";
             timeValue.textContent = String(DURATION);
-            resultBanner.style.display = "none";
             startBtn.textContent = "Đang chơi...";
-            startBtn.disabled = true;
-
-            clearBao();
 
             timerId = setInterval(() => {
                 timeLeft -= 1;
                 timeValue.textContent = String(timeLeft);
+                
+                // Shake effect khi còn 10 giây
+                if (timeLeft === 10) {
+                    gameArea.classList.add("shake");
+                    setTimeout(() => gameArea.classList.remove("shake"), 300);
+                }
+                
                 if (timeLeft <= 0) {
                     endGame();
                 }
@@ -797,6 +1246,9 @@
             stopTimers();
             clearBao();
 
+            // Phát âm thanh kết thúc
+            playEndSound();
+
             startBtn.textContent = "Chơi lại";
             startBtn.disabled = false;
 
@@ -811,7 +1263,9 @@
             resultSub.textContent = message.body;
             resultBanner.style.display = "flex";
 
-            spawnFireworks();
+            // Pháo hoa nhiều hơn nếu đạt điểm cao
+            const fireworkCount = score > 20 ? 16 : score > 12 ? 12 : 8;
+            spawnFireworks(fireworkCount);
         }
 
         function getMessageForScore(score, best) {
@@ -845,14 +1299,15 @@
             };
         }
 
-        function spawnFireworks() {
+        function spawnFireworks(count = 8) {
             const colors = ["#ffcf00", "#ff5c5c", "#00ffb3", "#7b5cff", "#ff9a3c"];
-            const count = 8;
             for (let i = 0; i < count; i++) {
-                const x = randomBetween(10, 90);
-                const y = randomBetween(10, 45);
-                const color = colors[i % colors.length];
-                createFirework(x, y, color);
+                setTimeout(() => {
+                    const x = randomBetween(10, 90);
+                    const y = randomBetween(10, 45);
+                    const color = colors[i % colors.length];
+                    createFirework(x, y, color);
+                }, i * 150);
             }
         }
 
@@ -898,6 +1353,16 @@
             } catch (e) {
             }
             resultBanner.style.display = "none";
+        });
+
+        audioToggle.addEventListener("click", function () {
+            audioEnabled = !audioEnabled;
+            audioToggle.textContent = audioEnabled ? "🔊" : "🔇";
+            audioToggle.title = audioEnabled ? "Tắt âm thanh" : "Bật âm thanh";
+            
+            if (audioEnabled) {
+                initAudio();
+            }
         });
 
         loadBest();
