@@ -22,12 +22,21 @@
             align-items: center;
             justify-content: center;
             background: radial-gradient(circle at top, #ffecd2, #fcb69f 0, #8b0000 55%, #1a0010 100%);
+            background-attachment: fixed;
             color: #fff;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
             -webkit-tap-highlight-color: transparent;
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
+        }
+
+        @media (max-width: 800px) {
+            body {
+                align-items: flex-start;
+                padding: 20px 0;
+            }
         }
 
         html {
@@ -53,9 +62,16 @@
             z-index: 1;
         }
 
+        @media (max-width: 800px) {
+            .container {
+                width: 100%;
+                margin: auto;
+            }
+        }
+
         @media (max-width: 600px) {
             .container {
-                padding: 12px 12px 12px;
+                padding: 12px 12px 80px;
             }
         }
 
