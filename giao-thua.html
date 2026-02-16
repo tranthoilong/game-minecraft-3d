@@ -1,10 +1,908 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giao Thương</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trò chơi đêm giao thừa - Săn Bao Lì Xì</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at top, #ffecd2, #fcb69f 0, #8b0000 55%, #1a0010 100%);
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                    radial-gradient(circle at 10% 20%, rgba(255,255,255,0.1) 0, transparent 50%),
+                    radial-gradient(circle at 90% 10%, rgba(255,255,255,0.08) 0, transparent 50%),
+                    radial-gradient(circle at 20% 90%, rgba(255,255,255,0.05) 0, transparent 50%);
+            mix-blend-mode: screen;
+            opacity: 0.8;
+        }
+
+        .container {
+            position: relative;
+            width: min(960px, 100%);
+            padding: 24px 20px 16px;
+            z-index: 1;
+        }
+
+        .card {
+            background: linear-gradient(145deg, rgba(0, 0, 0, 0.85), rgba(60, 0, 0, 0.95));
+            border-radius: 24px;
+            border: 1px solid rgba(255, 215, 0, 0.4);
+            box-shadow:
+                0 18px 45px rgba(0, 0, 0, 0.7),
+                0 0 40px rgba(255, 69, 0, 0.5);
+            padding: 24px 24px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before,
+        .card::after {
+            content: "";
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(40px);
+            opacity: 0.4;
+            z-index: -1;
+        }
+
+        .card::before {
+            width: 320px;
+            height: 320px;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.8), transparent 70%);
+            top: -120px;
+            right: -100px;
+        }
+
+        .card::after {
+            width: 260px;
+            height: 260px;
+            background: radial-gradient(circle, rgba(255, 99, 71, 0.8), transparent 70%);
+            bottom: -100px;
+            left: -80px;
+        }
+
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        .title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            background: radial-gradient(circle at 0 0, #ffd700, #ff4500);
+            color: #3b0000;
+            font-weight: 700;
+            box-shadow: 0 0 12px rgba(255, 215, 0, 0.7);
+        }
+
+        .badge-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #3b0000;
+        }
+
+        h1 {
+            font-size: clamp(22px, 3vw, 28px);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            font-weight: 800;
+            text-shadow: 0 0 18px rgba(255, 215, 0, 0.6);
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #ffe6c9;
+            max-width: 420px;
+            opacity: 0.9;
+        }
+
+        .info-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            border-radius: 16px;
+            background: linear-gradient(90deg, rgba(255, 215, 0, 0.1), rgba(255, 69, 0, 0.1));
+            border: 1px solid rgba(255, 215, 0, 0.4);
+        }
+
+        .info-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .info-pill {
+            display: inline-flex;
+            gap: 6px;
+            align-items: baseline;
+            font-size: 13px;
+        }
+
+        .info-label {
+            color: #ffdd99;
+            opacity: 0.9;
+        }
+
+        .info-value {
+            font-weight: 700;
+            color: #ffd700;
+        }
+
+        .difficulty {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.55);
+            border: 1px solid rgba(255, 215, 0, 0.4);
+        }
+
+        .difficulty span:last-child {
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #ffd700;
+        }
+
+        .difficulty-dots {
+            display: inline-flex;
+            gap: 3px;
+        }
+
+        .difficulty-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .difficulty-dot.active {
+            background: #ff4500;
+            box-shadow: 0 0 6px rgba(255, 69, 0, 0.8);
+        }
+
+        .game-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr);
+            gap: 16px;
+        }
+
+        @media (max-width: 800px) {
+            .game-layout {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        .game-area {
+            position: relative;
+            min-height: 320px;
+            border-radius: 18px;
+            background: radial-gradient(circle at top, rgba(255, 255, 255, 0.12), transparent 55%),
+                        linear-gradient(180deg, rgba(0, 0, 0, 0.85), rgba(32, 0, 0, 0.9));
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        .game-area-inner {
+            position: absolute;
+            inset: 0;
+            padding: 12px;
+        }
+
+        .game-hint {
+            position: absolute;
+            z-index: 1;
+            right: 12px;
+            top: 10px;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px dashed rgba(255, 215, 0, 0.5);
+            color: #ffe6c9;
+        }
+
+        .bao-li-xi {
+            position: absolute;
+            width: 54px;
+            height: 82px;
+            background: linear-gradient(145deg, #ff2d2d, #b10000);
+            border-radius: 12px 12px 8px 8px;
+            border: 2px solid #ffd700;
+            box-shadow:
+                0 8px 18px rgba(0, 0, 0, 0.7),
+                0 0 14px rgba(255, 69, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #ffd700;
+            font-weight: 800;
+            text-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
+            cursor: pointer;
+            transform-origin: center;
+            animation: float 2.4s ease-in-out infinite;
+        }
+
+        .bao-li-xi::before {
+            content: "福";
+            font-family: "Noto Serif SC", "Times New Roman", serif;
+            font-size: 26px;
+            line-height: 1;
+        }
+
+        .bao-li-xi small {
+            font-size: 10px;
+            margin-top: 2px;
+            letter-spacing: 0.1em;
+        }
+
+        .bao-li-xi:hover {
+            transform: scale(1.05);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        .bao-pop {
+            animation: pop 0.25s ease-out forwards;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); opacity: 1; }
+            80% { transform: scale(1.35); opacity: 1; }
+            100% { transform: scale(0.2); opacity: 0; }
+        }
+
+        .score-float {
+            position: absolute;
+            font-size: 16px;
+            font-weight: 700;
+            color: #00ff9c;
+            text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
+            pointer-events: none;
+            animation: floatScore 0.8s ease-out forwards;
+        }
+
+        @keyframes floatScore {
+            from { transform: translateY(0); opacity: 1; }
+            to { transform: translateY(-28px); opacity: 0; }
+        }
+
+        .lantern {
+            position: absolute;
+            width: 40px;
+            height: 54px;
+            border-radius: 50% 50% 45% 45%;
+            background: radial-gradient(circle at top, #ffd700, #ff4500 40%, #8b0000 100%);
+            border: 1px solid rgba(255, 215, 0, 0.6);
+            box-shadow:
+                0 0 16px rgba(255, 140, 0, 0.8),
+                0 10px 18px rgba(0, 0, 0, 0.8);
+            top: 10px;
+            animation: swing 4s ease-in-out infinite;
+            transform-origin: top center;
+        }
+
+        .lantern::before {
+            content: "";
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            width: 2px;
+            height: 12px;
+            background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.8));
+            transform: translateX(-50%);
+        }
+
+        .lantern::after {
+            content: "";
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ffd700;
+            transform: translateX(-50%);
+        }
+
+        .lantern span {
+            position: absolute;
+            inset: 8px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 215, 0, 0.9);
+        }
+
+        @keyframes swing {
+            0% { transform: rotate(0); }
+            25% { transform: rotate(4deg); }
+            50% { transform: rotate(0); }
+            75% { transform: rotate(-4deg); }
+            100% { transform: rotate(0); }
+        }
+
+        .game-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .section-title {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #ffd700;
+        }
+
+        .rules {
+            font-size: 13px;
+            line-height: 1.5;
+            color: #ffe6c9;
+            padding: 10px 12px;
+            border-radius: 14px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .rules ul {
+            margin-left: 18px;
+            margin-top: 4px;
+            display: grid;
+            gap: 2px;
+        }
+
+        .rules li {
+            margin-bottom: 2px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .stat-card {
+            padding: 10px 12px;
+            border-radius: 14px;
+            background: radial-gradient(circle at top, rgba(255, 215, 0, 0.15), rgba(0, 0, 0, 0.8));
+            border: 1px solid rgba(255, 215, 0, 0.35);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #ffe6c9;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            opacity: 0.9;
+        }
+
+        .stat-value {
+            margin-top: 4px;
+            font-size: 20px;
+            font-weight: 800;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.9);
+        }
+
+        .stat-sub {
+            margin-top: 2px;
+            font-size: 11px;
+            color: #ffdd99;
+            opacity: 0.85;
+        }
+
+        .controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: none;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: transform 0.13s ease, box-shadow 0.13s ease, background 0.13s ease, filter 0.13s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ffd700, #ff4500);
+            color: #3b0000;
+            box-shadow:
+                0 0 18px rgba(255, 215, 0, 0.9),
+                0 6px 14px rgba(0, 0, 0, 0.7);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px) scale(1.03);
+            box-shadow:
+                0 0 22px rgba(255, 215, 0, 1),
+                0 8px 18px rgba(0, 0, 0, 0.8);
+            filter: brightness(1.05);
+        }
+
+        .btn-primary:active {
+            transform: translateY(1px) scale(0.98);
+            box-shadow:
+                0 0 12px rgba(255, 215, 0, 0.8),
+                0 2px 6px rgba(0, 0, 0, 0.8);
+        }
+
+        .btn-ghost {
+            background: rgba(0, 0, 0, 0.65);
+            color: #ffdd99;
+            border: 1px dashed rgba(255, 215, 0, 0.5);
+        }
+
+        .btn-ghost:hover {
+            background: rgba(0, 0, 0, 0.8);
+            transform: translateY(-1px);
+        }
+
+        .hint-text {
+            font-size: 11px;
+            color: #ffdd99;
+            opacity: 0.9;
+        }
+
+        .result-banner {
+            margin-top: 4px;
+            padding: 9px 12px;
+            border-radius: 14px;
+            background: radial-gradient(circle at 0 0, rgba(255, 215, 0, 0.18), rgba(0, 0, 0, 0.9));
+            border: 1px solid rgba(255, 215, 0, 0.6);
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .result-main {
+            font-size: 13px;
+            font-weight: 700;
+            color: #ffd700;
+        }
+
+        .result-sub {
+            font-size: 12px;
+            color: #ffe6c9;
+        }
+
+        .firework {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .firework-dot {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: currentColor;
+            box-shadow: 0 0 6px currentColor;
+        }
+    </style>
 </head>
 <body>
-    <h1>Giao Thương</h1>
+<div class="overlay"></div>
+
+<div class="container">
+    <main class="card" aria-label="Trò chơi đêm giao thừa Săn Bao Lì Xì">
+        <header class="header">
+            <div class="title-group">
+                <div class="badge">
+                    <span class="badge-dot"></span>
+                    <span>Đêm giao thừa</span>
+                </div>
+                <h1>Săn Bao Lì Xì</h1>
+                <p class="subtitle">
+                    Bao lì xì xuất hiện khắp sân nhà. Trong <strong>30 giây</strong>, hãy bấm thật nhanh để gom thật nhiều may mắn
+                    cho năm mới!
+                </p>
+            </div>
+            <div class="difficulty">
+                <div class="difficulty-dots" aria-hidden="true">
+                    <span class="difficulty-dot active"></span>
+                    <span class="difficulty-dot active"></span>
+                    <span class="difficulty-dot"></span>
+                </div>
+                <span>Dễ - Vui</span>
+            </div>
+        </header>
+
+        <section class="info-bar" aria-label="Thông tin lượt chơi">
+            <div class="info-group">
+                <div class="info-pill">
+                    <span class="info-label">Thời gian mỗi lượt:</span>
+                    <span class="info-value" id="info-duration">30s</span>
+                </div>
+                <div class="info-pill">
+                    <span class="info-label">Bao lì xì tối đa cùng lúc:</span>
+                    <span class="info-value" id="info-max-bao">6</span>
+                </div>
+            </div>
+            <div class="info-group">
+                <div class="info-pill">
+                    <span class="info-label">Phù hợp:</span>
+                    <span class="info-value">Cả gia đình</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="game-layout">
+            <div class="game-area" id="gameArea" aria-live="polite">
+                <div class="game-area-inner">
+                    <div class="game-hint">Bấm vào bao lì xì để nhận điểm</div>
+                    <div class="lantern" style="left: 16px;">
+                        <span></span>
+                    </div>
+                    <div class="lantern" style="right: 16px; animation-delay: 1.2s;">
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+
+            <aside class="game-panel">
+                <section aria-label="Luật chơi">
+                    <h2 class="section-title">Luật chơi</h2>
+                    <div class="rules">
+                        <p>Trong không khí đón giao thừa, hãy cùng cả nhà chơi mini game nhỏ:</p>
+                        <ul>
+                            <li>Nhấn <strong>Bắt đầu</strong> để khởi động lượt chơi.</li>
+                            <li>Trong vòng <strong>30 giây</strong>, bao lì xì sẽ xuất hiện ngẫu nhiên.</li>
+                            <li>Bấm vào mỗi bao để nhận <strong>+1 điểm</strong> may mắn.</li>
+                            <li>Kết thúc lượt, xem tổng điểm và lời chúc năm mới dành riêng cho bạn.</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section aria-label="Chỉ số lượt chơi">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Thời gian</div>
+                            <div class="stat-value" id="timeValue">30</div>
+                            <div class="stat-sub">giây còn lại</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Điểm lượt này</div>
+                            <div class="stat-value" id="scoreValue">0</div>
+                            <div class="stat-sub">bao lì xì đã bắt</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Kỷ lục</div>
+                            <div class="stat-value" id="bestValue">0</div>
+                            <div class="stat-sub">cao nhất từ trước tới nay</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section aria-label="Điều khiển trò chơi">
+                    <div class="controls-row">
+                        <button class="btn btn-primary" id="startBtn" type="button">
+                            <span>🎆 Bắt đầu</span>
+                        </button>
+                        <button class="btn btn-ghost" id="resetBestBtn" type="button">
+                            Xóa kỷ lục
+                        </button>
+                    </div>
+                    <p class="hint-text">
+                        Gợi ý: Cả nhà có thể chia lượt, ai đạt điểm cao nhất sẽ nhận phần lì xì “đặc biệt” ngoài đời thật!
+                    </p>
+                    <div class="result-banner" id="resultBanner" role="status">
+                        <p class="result-main" id="resultMain"></p>
+                        <p class="result-sub" id="resultSub"></p>
+                    </div>
+                </section>
+            </aside>
+        </section>
+    </main>
+</div>
+
+<script>
+    (function () {
+        const DURATION = 30; // giây
+        const MAX_BAO = 6;
+        const SPAWN_INTERVAL = 650; // ms
+        const gameArea = document.getElementById("gameArea");
+        const startBtn = document.getElementById("startBtn");
+        const resetBestBtn = document.getElementById("resetBestBtn");
+        const timeValue = document.getElementById("timeValue");
+        const scoreValue = document.getElementById("scoreValue");
+        const bestValue = document.getElementById("bestValue");
+        const resultBanner = document.getElementById("resultBanner");
+        const resultMain = document.getElementById("resultMain");
+        const resultSub = document.getElementById("resultSub");
+
+        let timeLeft = DURATION;
+        let score = 0;
+        let best = 0;
+        let timerId = null;
+        let spawnId = null;
+        let isPlaying = false;
+
+        function loadBest() {
+            try {
+                const raw = localStorage.getItem("giao-thua-best-score");
+                if (!raw) return;
+                const v = parseInt(raw, 10);
+                if (!isNaN(v) && v >= 0) {
+                    best = v;
+                    bestValue.textContent = String(best);
+                }
+            } catch (e) {
+            }
+        }
+
+        function saveBest() {
+            try {
+                localStorage.setItem("giao-thua-best-score", String(best));
+            } catch (e) {
+            }
+        }
+
+        function randomBetween(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function createBaoLiXi() {
+            if (!isPlaying) return;
+            const currentBao = gameArea.querySelectorAll(".bao-li-xi").length;
+            if (currentBao >= MAX_BAO) return;
+
+            const rect = gameArea.getBoundingClientRect();
+            const margin = 30;
+            const x = randomBetween(margin, rect.width - margin - 54);
+            const y = randomBetween(40, rect.height - margin - 82);
+
+            const bao = document.createElement("button");
+            bao.type = "button";
+            bao.className = "bao-li-xi";
+            bao.style.left = x + "px";
+            bao.style.top = y + "px";
+            bao.setAttribute("aria-label", "Bao lì xì - bấm để nhận điểm");
+
+            const small = document.createElement("small");
+            small.textContent = "+1 may mắn";
+            bao.appendChild(small);
+
+            bao.addEventListener("click", function (event) {
+                if (!isPlaying) return;
+                score += 1;
+                scoreValue.textContent = String(score);
+
+                bao.classList.add("bao-pop");
+
+                const fx = document.createElement("div");
+                fx.className = "score-float";
+                const bounds = bao.getBoundingClientRect();
+                const gameBounds = gameArea.getBoundingClientRect();
+                fx.textContent = "+1";
+                fx.style.left = bounds.left - gameBounds.left + bounds.width / 2 - 6 + "px";
+                fx.style.top = bounds.top - gameBounds.top + "px";
+
+                gameArea.appendChild(fx);
+
+                setTimeout(() => {
+                    fx.remove();
+                    bao.remove();
+                }, 260);
+
+                event.stopPropagation();
+            }, { once: true });
+
+            gameArea.appendChild(bao);
+        }
+
+        function clearBao() {
+            gameArea.querySelectorAll(".bao-li-xi, .score-float").forEach(el => el.remove());
+        }
+
+        function startGame() {
+            if (isPlaying) return;
+            isPlaying = true;
+            timeLeft = DURATION;
+            score = 0;
+            scoreValue.textContent = "0";
+            timeValue.textContent = String(DURATION);
+            resultBanner.style.display = "none";
+            startBtn.textContent = "Đang chơi...";
+            startBtn.disabled = true;
+
+            clearBao();
+
+            timerId = setInterval(() => {
+                timeLeft -= 1;
+                timeValue.textContent = String(timeLeft);
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+
+            createBaoLiXi();
+            spawnId = setInterval(createBaoLiXi, SPAWN_INTERVAL);
+        }
+
+        function stopTimers() {
+            if (timerId) {
+                clearInterval(timerId);
+                timerId = null;
+            }
+            if (spawnId) {
+                clearInterval(spawnId);
+                spawnId = null;
+            }
+        }
+
+        function endGame() {
+            if (!isPlaying) return;
+            isPlaying = false;
+            stopTimers();
+            clearBao();
+
+            startBtn.textContent = "Chơi lại";
+            startBtn.disabled = false;
+
+            if (score > best) {
+                best = score;
+                bestValue.textContent = String(best);
+                saveBest();
+            }
+
+            const message = getMessageForScore(score, best);
+            resultMain.textContent = message.title;
+            resultSub.textContent = message.body;
+            resultBanner.style.display = "flex";
+
+            spawnFireworks();
+        }
+
+        function getMessageForScore(score, best) {
+            if (score === 0) {
+                return {
+                    title: "Ôi, thiếu chút nữa thôi!",
+                    body: "Bạn chưa bắt được bao lì xì nào, nhưng biết đâu lì xì thật ngoài đời đang chờ bạn. Thêm một lượt nữa nhé!"
+                };
+            }
+            if (score <= 5) {
+                return {
+                    title: "Khởi động năm mới nhẹ nhàng 🎋",
+                    body: "Vài bao lì xì đầu năm tượng trưng cho may mắn gõ cửa. Chúc bạn năm mới an nhiên, vạn sự như ý!"
+                };
+            }
+            if (score <= 12) {
+                return {
+                    title: "Tài lộc khá rủng rỉnh 💰",
+                    body: "Bạn bắt được khá nhiều bao lì xì rồi đó! Chúc năm mới công việc hanh thông, gia đình sum vầy ấm áp."
+                };
+            }
+            if (score <= 20) {
+                return {
+                    title: "Đại gia lì xì của năm nay 😎",
+                    body: "Tay nhanh hơn não luôn! Chúc bạn năm mới tiền vào như nước, sức khỏe dồi dào, niềm vui tràn ngập."
+                };
+            }
+            return {
+                title: "Siêu cấp thánh săn lì xì! 🎉",
+                body: "Phong độ đỉnh cao! Chúc bạn một năm mới đại thắng lợi, mọi ước mơ đều thành hiện thực, gia đình hạnh phúc viên mãn."
+            };
+        }
+
+        function spawnFireworks() {
+            const colors = ["#ffcf00", "#ff5c5c", "#00ffb3", "#7b5cff", "#ff9a3c"];
+            const count = 8;
+            for (let i = 0; i < count; i++) {
+                const x = randomBetween(10, 90);
+                const y = randomBetween(10, 45);
+                const color = colors[i % colors.length];
+                createFirework(x, y, color);
+            }
+        }
+
+        function createFirework(xPercent, yPercent, color) {
+            const fw = document.createElement("div");
+            fw.className = "firework";
+            fw.style.left = xPercent + "vw";
+            fw.style.top = yPercent + "vh";
+            fw.style.color = color;
+
+            const particles = 16;
+            const radius = 40;
+            for (let i = 0; i < particles; i++) {
+                const dot = document.createElement("div");
+                dot.className = "firework-dot";
+                const angle = (Math.PI * 2 * i) / particles;
+                const dx = Math.cos(angle) * radius;
+                const dy = Math.sin(angle) * radius;
+
+                dot.style.transform = "translate(0, 0)";
+                dot.animate([
+                    { transform: "translate(0, 0)", opacity: 1 },
+                    { transform: "translate(" + dx + "px," + dy + "px)", opacity: 0 }
+                ], {
+                    duration: 900,
+                    easing: "cubic-bezier(0.2,0.6,0.3,1)"
+                });
+
+                fw.appendChild(dot);
+            }
+
+            document.body.appendChild(fw);
+            setTimeout(() => fw.remove(), 1000);
+        }
+
+        startBtn.addEventListener("click", startGame);
+
+        resetBestBtn.addEventListener("click", function () {
+            best = 0;
+            bestValue.textContent = "0";
+            try {
+                localStorage.removeItem("giao-thua-best-score");
+            } catch (e) {
+            }
+            resultBanner.style.display = "none";
+        });
+
+        loadBest();
+        timeValue.textContent = String(DURATION);
+    })();
+</script>
 </body>
+</html>
