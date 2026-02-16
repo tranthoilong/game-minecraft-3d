@@ -2,7 +2,10 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Trò chơi đêm giao thừa - Săn Bao Lì Xì</title>
     <style>
         * {
@@ -14,12 +17,21 @@
         body {
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             min-height: 100vh;
+            min-height: -webkit-fill-available;
             display: flex;
             align-items: center;
             justify-content: center;
             background: radial-gradient(circle at top, #ffecd2, #fcb69f 0, #8b0000 55%, #1a0010 100%);
             color: #fff;
             overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        html {
+            height: -webkit-fill-available;
         }
 
         .overlay {
@@ -41,6 +53,12 @@
             z-index: 1;
         }
 
+        @media (max-width: 600px) {
+            .container {
+                padding: 12px 12px 12px;
+            }
+        }
+
         .card {
             background: linear-gradient(145deg, rgba(0, 0, 0, 0.85), rgba(60, 0, 0, 0.95));
             border-radius: 24px;
@@ -51,6 +69,13 @@
             padding: 24px 24px 20px;
             position: relative;
             overflow: hidden;
+        }
+
+        @media (max-width: 600px) {
+            .card {
+                padding: 16px 16px 16px;
+                border-radius: 16px;
+            }
         }
 
         .card::before,
@@ -88,6 +113,13 @@
             margin-bottom: 18px;
         }
 
+        @media (max-width: 600px) {
+            .header {
+                gap: 12px;
+                margin-bottom: 12px;
+            }
+        }
+
         .title-group {
             display: flex;
             flex-direction: column;
@@ -117,11 +149,17 @@
         }
 
         h1 {
-            font-size: clamp(22px, 3vw, 28px);
+            font-size: clamp(20px, 5vw, 28px);
             letter-spacing: 0.06em;
             text-transform: uppercase;
             font-weight: 800;
             text-shadow: 0 0 18px rgba(255, 215, 0, 0.6);
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: clamp(18px, 6vw, 24px);
+            }
         }
 
         .subtitle {
@@ -129,6 +167,18 @@
             color: #ffe6c9;
             max-width: 420px;
             opacity: 0.9;
+        }
+
+        @media (max-width: 600px) {
+            .subtitle {
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .subtitle {
+                font-size: 12px;
+            }
         }
 
         .info-bar {
@@ -142,6 +192,18 @@
             border-radius: 16px;
             background: linear-gradient(90deg, rgba(255, 215, 0, 0.1), rgba(255, 69, 0, 0.1));
             border: 1px solid rgba(255, 215, 0, 0.4);
+        }
+
+        @media (max-width: 600px) {
+            .info-bar {
+                padding: 8px 10px;
+                margin-bottom: 10px;
+                border-radius: 12px;
+            }
+
+            .info-pill {
+                font-size: 12px;
+            }
         }
 
         .info-group {
@@ -223,6 +285,14 @@
             border: 1px solid rgba(255, 215, 0, 0.3);
             overflow: hidden;
             cursor: crosshair;
+            touch-action: manipulation;
+        }
+
+        @media (max-width: 600px) {
+            .game-area {
+                min-height: 280px;
+                border-radius: 12px;
+            }
         }
 
         .game-area-inner {
@@ -242,6 +312,15 @@
             background: rgba(0, 0, 0, 0.6);
             border: 1px dashed rgba(255, 215, 0, 0.5);
             color: #ffe6c9;
+        }
+
+        @media (max-width: 500px) {
+            .game-hint {
+                font-size: 10px;
+                padding: 2px 6px;
+                right: 8px;
+                top: 8px;
+            }
         }
 
         .bao-li-xi {
@@ -265,6 +344,22 @@
             transform-origin: center;
             animation: float 2.4s ease-in-out infinite;
             overflow: hidden;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        @media (max-width: 600px) {
+            .bao-li-xi {
+                width: 58px;
+                height: 88px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .bao-li-xi {
+                width: 50px;
+                height: 76px;
+            }
         }
 
         .bao-li-xi::after {
@@ -322,8 +417,10 @@
             letter-spacing: 0.1em;
         }
 
-        .bao-li-xi:hover {
-            transform: scale(1.05);
+        @media (hover: hover) {
+            .bao-li-xi:hover {
+                transform: scale(1.05);
+            }
         }
 
         @keyframes float {
@@ -369,6 +466,12 @@
             top: 10px;
             animation: swing 4s ease-in-out infinite;
             transform-origin: top center;
+        }
+
+        @media (max-width: 500px) {
+            .lantern {
+                display: none;
+            }
         }
 
         .lantern::before {
@@ -433,6 +536,20 @@
             border: 1px solid rgba(255, 215, 0, 0.3);
         }
 
+        @media (max-width: 600px) {
+            .rules {
+                font-size: 12px;
+                line-height: 1.4;
+                padding: 8px 10px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .rules {
+                font-size: 11px;
+            }
+        }
+
         .rules ul {
             margin-left: 18px;
             margin-top: 4px;
@@ -450,11 +567,36 @@
             gap: 8px;
         }
 
+        @media (max-width: 600px) {
+            .stats-grid {
+                gap: 6px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+        }
+
         .stat-card {
             padding: 10px 12px;
             border-radius: 14px;
             background: radial-gradient(circle at top, rgba(255, 215, 0, 0.15), rgba(0, 0, 0, 0.8));
             border: 1px solid rgba(255, 215, 0, 0.35);
+        }
+
+        @media (max-width: 600px) {
+            .stat-card {
+                padding: 8px 10px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .stat-card {
+                padding: 12px 14px;
+            }
         }
 
         .stat-label {
@@ -471,6 +613,12 @@
             font-weight: 800;
             color: #ffd700;
             text-shadow: 0 0 10px rgba(0, 0, 0, 0.9);
+        }
+
+        @media (max-width: 400px) {
+            .stat-value {
+                font-size: 18px;
+            }
         }
 
         .stat-sub {
@@ -501,6 +649,17 @@
             text-transform: uppercase;
             cursor: pointer;
             transition: transform 0.13s ease, box-shadow 0.13s ease, background 0.13s ease, filter 0.13s ease;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            min-height: 44px;
+        }
+
+        @media (max-width: 600px) {
+            .btn {
+                padding: 12px 20px;
+                font-size: 14px;
+                min-height: 48px;
+            }
         }
 
         .btn-primary {
@@ -511,12 +670,19 @@
                 0 6px 14px rgba(0, 0, 0, 0.7);
         }
 
-        .btn-primary:hover {
-            transform: translateY(-1px) scale(1.03);
-            box-shadow:
-                0 0 22px rgba(255, 215, 0, 1),
-                0 8px 18px rgba(0, 0, 0, 0.8);
-            filter: brightness(1.05);
+        @media (hover: hover) {
+            .btn-primary:hover {
+                transform: translateY(-1px) scale(1.03);
+                box-shadow:
+                    0 0 22px rgba(255, 215, 0, 1),
+                    0 8px 18px rgba(0, 0, 0, 0.8);
+                filter: brightness(1.05);
+            }
+
+            .btn-ghost:hover {
+                background: rgba(0, 0, 0, 0.8);
+                transform: translateY(-1px);
+            }
         }
 
         .btn-primary:active {
@@ -532,15 +698,22 @@
             border: 1px dashed rgba(255, 215, 0, 0.5);
         }
 
-        .btn-ghost:hover {
-            background: rgba(0, 0, 0, 0.8);
-            transform: translateY(-1px);
-        }
-
         .hint-text {
             font-size: 11px;
             color: #ffdd99;
             opacity: 0.9;
+        }
+
+        @media (max-width: 600px) {
+            .hint-text {
+                font-size: 10px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .hint-text {
+                display: none;
+            }
         }
 
         .result-banner {
@@ -646,6 +819,18 @@
             animation: comboPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
 
+        @media (max-width: 600px) {
+            .combo-badge {
+                font-size: 36px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .combo-badge {
+                font-size: 30px;
+            }
+        }
+
         @keyframes comboPop {
             0% { 
                 opacity: 0; 
@@ -730,6 +915,18 @@
             animation: countdownPulse 1s ease-out;
         }
 
+        @media (max-width: 600px) {
+            .countdown-number {
+                font-size: 80px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .countdown-number {
+                font-size: 60px;
+            }
+        }
+
         @keyframes countdownPulse {
             0% { 
                 transform: scale(0.5); 
@@ -761,12 +958,30 @@
             font-size: 20px;
             z-index: 100;
             transition: all 0.2s ease;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .audio-toggle:hover {
-            background: rgba(0, 0, 0, 0.9);
-            transform: scale(1.1);
-            border-color: rgba(255, 215, 0, 0.8);
+        @media (max-width: 600px) {
+            .audio-toggle {
+                width: 56px;
+                height: 56px;
+                font-size: 24px;
+                bottom: 16px;
+                right: 16px;
+            }
+        }
+
+        @media (hover: hover) {
+            .audio-toggle:hover {
+                background: rgba(0, 0, 0, 0.9);
+                transform: scale(1.1);
+                border-color: rgba(255, 215, 0, 0.8);
+            }
+        }
+
+        .audio-toggle:active {
+            transform: scale(0.95);
         }
 
         .combo-meter {
@@ -785,6 +1000,21 @@
             opacity: 0;
             transition: opacity 0.3s ease;
             z-index: 10;
+        }
+
+        @media (max-width: 600px) {
+            .combo-meter {
+                right: 8px;
+                padding: 6px 10px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .combo-meter {
+                top: 16px;
+                right: 8px;
+                transform: translateY(0);
+            }
         }
 
         .combo-meter.active {
@@ -871,6 +1101,18 @@
             animation: gradientShift 3s ease infinite;
         }
 
+        @media (max-width: 600px) {
+            .final-message-year {
+                font-size: 56px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .final-message-year {
+                font-size: 48px;
+            }
+        }
+
         @keyframes gradientShift {
             0%, 100% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -886,10 +1128,95 @@
             margin-bottom: 8px;
         }
 
+        @media (max-width: 600px) {
+            .final-message-text {
+                font-size: 22px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .final-message-text {
+                font-size: 18px;
+            }
+        }
+
         .final-message-subtitle {
             font-size: 18px;
             color: #ffe6c9;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        @media (max-width: 600px) {
+            .final-message-subtitle {
+                font-size: 15px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .final-message-subtitle {
+                font-size: 13px;
+            }
+        }
+
+        /* Tối ưu performance cho mobile */
+        @media (max-width: 600px) {
+            /* Giảm blur cho mobile để tăng performance */
+            .card::before,
+            .card::after {
+                filter: blur(20px);
+            }
+
+            /* Giảm số lượng hiệu ứng rung */
+            .bao-li-xi.warning {
+                animation: float 2.4s ease-in-out infinite;
+            }
+
+            /* Tối ưu particle animations */
+            .particle,
+            .firework-dot,
+            .firework-trail {
+                will-change: transform, opacity;
+            }
+
+            /* Giảm độ phức tạp của pháo hoa trên mobile nhỏ */
+            @media (max-width: 400px) {
+                .overlay {
+                    opacity: 0.5;
+                }
+            }
+        }
+
+        /* Tối ưu cho orientation landscape trên mobile */
+        @media (max-width: 900px) and (orientation: landscape) {
+            .container {
+                padding: 8px 12px;
+            }
+
+            .card {
+                padding: 12px;
+            }
+
+            .game-layout {
+                grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+                gap: 12px;
+            }
+
+            .game-area {
+                min-height: 200px;
+            }
+
+            h1 {
+                font-size: 18px;
+            }
+
+            .subtitle {
+                font-size: 11px;
+            }
+
+            .rules {
+                font-size: 11px;
+                padding: 8px 10px;
+            }
         }
     </style>
 </head>
@@ -1034,6 +1361,9 @@
         const DISAPPEAR_TIME = 4000; // 4 giây trước khi bao biến mất
         const WARNING_TIME = 1000; // 1 giây cuối sẽ có hiệu ứng cảnh báo
         
+        // Kiểm tra mobile để tối ưu hiệu ứng
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 600;
+        
         const gameArea = document.getElementById("gameArea");
         const startBtn = document.getElementById("startBtn");
         const resetBestBtn = document.getElementById("resetBestBtn");
@@ -1160,6 +1490,65 @@
             }
         }
 
+        // Tạo âm thanh pháo hoa (tiếng nổ)
+        function playFireworkSound(intensity = 1) {
+            if (!audioEnabled || !audioContext) return;
+
+            const duration = 0.4 + intensity * 0.2;
+
+            const osc1 = audioContext.createOscillator();
+            const osc2 = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            osc1.type = "triangle";
+            osc2.type = "sine";
+
+            osc1.connect(gainNode);
+            osc2.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            const now = audioContext.currentTime;
+            const baseFreq = 180 + intensity * 60;
+
+            osc1.frequency.setValueAtTime(baseFreq * 0.8, now);
+            osc1.frequency.exponentialRampToValueAtTime(60, now + duration);
+
+            osc2.frequency.setValueAtTime(baseFreq * 1.3, now);
+            osc2.frequency.exponentialRampToValueAtTime(90, now + duration);
+
+            gainNode.gain.setValueAtTime(0.5, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+            osc1.start(now);
+            osc2.start(now);
+            osc1.stop(now + duration);
+            osc2.stop(now + duration);
+        }
+
+        // Tạo âm thanh tên lửa bay lên
+        function playRocketSound() {
+            if (!audioEnabled || !audioContext) return;
+
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.type = "sawtooth";
+
+            const now = audioContext.currentTime;
+
+            oscillator.frequency.setValueAtTime(300, now);
+            oscillator.frequency.exponentialRampToValueAtTime(800, now + 0.3);
+
+            gainNode.gain.setValueAtTime(0.15, now);
+            gainNode.gain.linearRampToValueAtTime(0.0, now + 0.35);
+
+            oscillator.start(now);
+            oscillator.stop(now + 0.35);
+        }
+
         // Tạo âm thanh bấm hụt
         function playMissSound() {
             if (!audioEnabled || !audioContext) return;
@@ -1194,7 +1583,10 @@
 
         // Tạo hiệu ứng hạt
         function createParticles(x, y, color = "#ffd700", count = 12) {
-            for (let i = 0; i < count; i++) {
+            // Giảm số lượng particle trên mobile
+            const particleCount = isMobile ? Math.floor(count * 0.6) : count;
+            
+            for (let i = 0; i < particleCount; i++) {
                 const particle = document.createElement("div");
                 particle.className = "particle";
                 particle.style.left = x + "px";
@@ -1316,12 +1708,17 @@
         function createBaoLiXi() {
             if (!isPlaying) return;
             const currentBao = gameArea.querySelectorAll(".bao-li-xi").length;
-            if (currentBao >= MAX_BAO) return;
+            // Giảm số lượng bao tối đa trên mobile nhỏ
+            const maxBaoForDevice = isMobile && window.innerWidth <= 400 ? 4 : MAX_BAO;
+            if (currentBao >= maxBaoForDevice) return;
 
             const rect = gameArea.getBoundingClientRect();
-            const margin = 30;
-            const x = randomBetween(margin, rect.width - margin - 54);
-            const y = randomBetween(40, rect.height - margin - 82);
+            // Tăng margin trên mobile để tránh spawn gần cạnh
+            const margin = isMobile ? 40 : 30;
+            const baoWidth = isMobile && window.innerWidth <= 400 ? 50 : 54;
+            const baoHeight = isMobile && window.innerWidth <= 400 ? 76 : 82;
+            const x = randomBetween(margin, rect.width - margin - baoWidth);
+            const y = randomBetween(50, rect.height - margin - baoHeight);
 
             const isGolden = Math.random() < GOLDEN_CHANCE;
 
@@ -1364,7 +1761,8 @@
                 }
             }, DISAPPEAR_TIME);
 
-            bao.addEventListener("click", function (event) {
+            // Hàm xử lý click/touch
+            const handleBaoClick = function (event) {
                 if (!isPlaying || isClicked) return;
                 
                 isClicked = true;
@@ -1410,8 +1808,13 @@
                     bao.remove();
                 }, 260);
 
+                event.preventDefault();
                 event.stopPropagation();
-            }, { once: true });
+            };
+
+            // Thêm cả click và touchstart cho mobile
+            bao.addEventListener("click", handleBaoClick, { once: true });
+            bao.addEventListener("touchstart", handleBaoClick, { once: true, passive: false });
 
             gameArea.appendChild(bao);
         }
@@ -1448,9 +1851,19 @@
             
             // Hiển thị thông báo
             const rect = gameArea.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
+            let x, y;
+            
+            // Xử lý cả touch và click
+            if (event.touches && event.touches.length > 0) {
+                x = event.touches[0].clientX - rect.left;
+                y = event.touches[0].clientY - rect.top;
+            } else {
+                x = event.clientX - rect.left;
+                y = event.clientY - rect.top;
+            }
+            
             showMissIndicator(x, y);
+            event.preventDefault();
         }
 
         async function startGame() {
@@ -1486,8 +1899,9 @@
             timeValue.textContent = String(DURATION);
             startBtn.textContent = "Đang chơi...";
 
-            // Thêm event listener cho việc bấm hụt
+            // Thêm event listener cho việc bấm hụt (cả click và touch)
             gameArea.addEventListener("click", handleMissClick);
+            gameArea.addEventListener("touchstart", handleMissClick, { passive: false });
 
             timerId = setInterval(() => {
                 timeLeft -= 1;
@@ -1531,6 +1945,7 @@
 
             // Xóa event listener bấm hụt
             gameArea.removeEventListener("click", handleMissClick);
+            gameArea.removeEventListener("touchstart", handleMissClick);
 
             // Phát âm thanh kết thúc
             playEndSound();
@@ -1552,8 +1967,11 @@
             // Hiển thị màn hình chúc mừng năm mới
             showNewYearMessage();
 
-            // Pháo hoa nhiều hơn nếu đạt điểm cao
-            const fireworkCount = score > 20 ? 24 : score > 12 ? 18 : 12;
+            // Pháo hoa nhiều hơn nếu đạt điểm cao (giảm trên mobile)
+            let fireworkCount = score > 20 ? 24 : score > 12 ? 18 : 12;
+            if (isMobile) {
+                fireworkCount = Math.floor(fireworkCount * 0.6);
+            }
             spawnFireworks(fireworkCount);
         }
 
@@ -1626,22 +2044,62 @@
                     const color = colors[Math.floor(Math.random() * colors.length)];
                     const secondaryColor = colors[Math.floor(Math.random() * colors.length)];
                     
-                    // Random loại pháo hoa
                     const type = Math.random();
-                    if (type < 0.4) {
-                        createBurstFirework(x, y, color, secondaryColor);
-                    } else if (type < 0.7) {
-                        createTrailFirework(x, y, color);
-                    } else {
-                        createMultiLayerFirework(x, y, color, secondaryColor);
-                    }
-                    
-                    // Thêm sparkles ngẫu nhiên
-                    if (Math.random() > 0.5) {
-                        createSparkles(x, y);
-                    }
+                    createFireworkWithRocket(x, y, type, color, secondaryColor);
                 }, i * randomBetween(100, 250));
             }
+        }
+
+        // Tạo pháo hoa có tên lửa bay lên trước khi nổ
+        function createFireworkWithRocket(xPercent, yPercent, type, color, secondaryColor) {
+            const ascendDuration = randomBetween(600, 900);
+
+            const rocket = document.createElement("div");
+            rocket.className = "firework-rocket";
+            rocket.style.position = "fixed";
+            rocket.style.left = xPercent + "vw";
+            rocket.style.top = "100vh";
+            rocket.style.width = "4px";
+            rocket.style.height = "14px";
+            rocket.style.borderRadius = "999px";
+            rocket.style.background = "linear-gradient(to top, #ff4500, #ffffcc)";
+            rocket.style.boxShadow = "0 0 8px rgba(255, 220, 150, 0.9)";
+            rocket.style.zIndex = "502";
+
+            document.body.appendChild(rocket);
+
+            // Âm thanh tên lửa bay
+            playRocketSound();
+
+            rocket.animate([
+                { top: "100vh", opacity: 1, transform: "scale(1)" },
+                { top: yPercent + "vh", opacity: 0.9, transform: "scale(1.1)" }
+            ], {
+                duration: ascendDuration,
+                easing: "cubic-bezier(0.1, 0.9, 0.3, 1)"
+            });
+
+            setTimeout(() => {
+                rocket.remove();
+
+                // Âm thanh nổ
+                const intensity = type < 0.4 ? 1.3 : type < 0.7 ? 1.0 : 0.8;
+                playFireworkSound(intensity);
+
+                // Tạo hiệu ứng nổ
+                if (type < 0.4) {
+                    createBurstFirework(xPercent, yPercent, color, secondaryColor);
+                } else if (type < 0.7) {
+                    createTrailFirework(xPercent, yPercent, color);
+                } else {
+                    createMultiLayerFirework(xPercent, yPercent, color, secondaryColor);
+                }
+
+                // Thêm sparkles ngẫu nhiên quanh điểm nổ
+                if (Math.random() > 0.4) {
+                    createSparkles(xPercent, yPercent);
+                }
+            }, ascendDuration);
         }
 
         // Pháo hoa nổ bùng (burst) - hoành tráng nhất
@@ -1652,8 +2110,8 @@
             fw.style.top = yPercent + "vh";
             fw.style.color = primaryColor;
 
-            // Lớp 1: Vòng ngoài lớn
-            const outerParticles = 24;
+            // Lớp 1: Vòng ngoài lớn (giảm trên mobile)
+            const outerParticles = isMobile ? 16 : 24;
             const outerRadius = randomBetween(60, 80);
             for (let i = 0; i < outerParticles; i++) {
                 const dot = document.createElement("div");
@@ -1682,8 +2140,8 @@
                 fw.appendChild(dot);
             }
 
-            // Lớp 2: Vòng trong nhỏ hơn với màu khác
-            const innerParticles = 16;
+            // Lớp 2: Vòng trong nhỏ hơn với màu khác (giảm trên mobile)
+            const innerParticles = isMobile ? 10 : 16;
             const innerRadius = randomBetween(30, 45);
             for (let i = 0; i < innerParticles; i++) {
                 const dot = document.createElement("div");
@@ -1725,7 +2183,7 @@
             fw.style.top = yPercent + "vh";
             fw.style.color = color;
 
-            const particles = 20;
+            const particles = isMobile ? 14 : 20;
             const radius = randomBetween(50, 70);
             
             for (let i = 0; i < particles; i++) {
@@ -1749,8 +2207,9 @@
 
                 fw.appendChild(dot);
                 
-                // Thêm trails (đuôi)
-                for (let j = 1; j <= 3; j++) {
+                // Thêm trails (đuôi) - bỏ qua trên mobile để tăng performance
+                const trailCount = isMobile ? 2 : 3;
+                for (let j = 1; j <= trailCount; j++) {
                     const trail = document.createElement("div");
                     trail.className = "firework-trail";
                     trail.style.background = color;
@@ -1829,7 +2288,7 @@
 
         // Tạo hiệu ứng lấp lánh (sparkles)
         function createSparkles(xPercent, yPercent) {
-            const sparkleCount = randomBetween(8, 15);
+            const sparkleCount = isMobile ? randomBetween(5, 8) : randomBetween(8, 15);
             
             for (let i = 0; i < sparkleCount; i++) {
                 setTimeout(() => {
