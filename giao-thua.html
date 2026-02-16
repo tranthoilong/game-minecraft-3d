@@ -264,6 +264,49 @@
             cursor: pointer;
             transform-origin: center;
             animation: float 2.4s ease-in-out infinite;
+            overflow: hidden;
+        }
+
+        .bao-li-xi::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #00ff9c, #00cc7a);
+            transform-origin: left;
+            animation: disappearTimer var(--disappear-time) linear forwards;
+        }
+
+        @keyframes disappearTimer {
+            from { transform: scaleX(1); }
+            to { transform: scaleX(0); }
+        }
+
+        .bao-li-xi.warning {
+            animation: float 2.4s ease-in-out infinite, warningShake 0.2s ease-in-out infinite;
+        }
+
+        @keyframes warningShake {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(0) rotate(-2deg); }
+            75% { transform: translateY(0) rotate(2deg); }
+        }
+
+        .bao-disappear {
+            animation: fadeOutBao 0.4s ease-out forwards !important;
+        }
+
+        @keyframes fadeOutBao {
+            0% { 
+                transform: scale(1) rotate(0deg); 
+                opacity: 1; 
+            }
+            100% { 
+                transform: scale(0.3) rotate(180deg); 
+                opacity: 0; 
+            }
         }
 
         .bao-li-xi::before {
@@ -804,7 +847,9 @@
                         <ul>
                             <li>Nhấn <strong>Bắt đầu</strong> để khởi động lượt chơi.</li>
                             <li>Trong vòng <strong>30 giây</strong>, bao lì xì sẽ xuất hiện ngẫu nhiên.</li>
-                            <li>Bấm vào mỗi bao để nhận <strong>+1 điểm</strong> may mắn.</li>
+                            <li>Bấm vào mỗi bao để nhận <strong>+1 điểm</strong> (bao vàng <strong>+3 điểm</strong>).</li>
+                            <li><strong>Chú ý:</strong> Bao lì xì sẽ tự biến mất sau <strong>4 giây</strong> nếu không bấm!</li>
+                            <li>Bấm liên tục để tạo <strong>Combo</strong> và nhận điểm thưởng.</li>
                             <li>Kết thúc lượt, xem tổng điểm và lời chúc năm mới dành riêng cho bạn.</li>
                         </ul>
                     </div>
@@ -859,6 +904,8 @@
         const SPAWN_INTERVAL = 650; // ms
         const GOLDEN_CHANCE = 0.15; // 15% cơ hội bao vàng
         const COMBO_TIMEOUT = 2000; // 2 giây để duy trì combo
+        const DISAPPEAR_TIME = 4000; // 4 giây trước khi bao biến mất
+        const WARNING_TIME = 1000; // 1 giây cuối sẽ có hiệu ứng cảnh báo
         
         const gameArea = document.getElementById("gameArea");
         const startBtn = document.getElementById("startBtn");
@@ -1112,6 +1159,7 @@
             bao.className = "bao-li-xi" + (isGolden ? " golden" : "");
             bao.style.left = x + "px";
             bao.style.top = y + "px";
+            bao.style.setProperty('--disappear-time', DISAPPEAR_TIME + 'ms');
             bao.setAttribute("aria-label", isGolden ? "Bao lì xì vàng - bấm để nhận 3 điểm!" : "Bao lì xì - bấm để nhận điểm");
 
             if (!isGolden) {
@@ -1124,8 +1172,33 @@
                 bao.appendChild(small);
             }
 
+            let isClicked = false;
+
+            // Timer cảnh báo - thêm hiệu ứng rung khi sắp hết thời gian
+            const warningTimer = setTimeout(() => {
+                if (!isClicked && bao.parentElement) {
+                    bao.classList.add("warning");
+                }
+            }, DISAPPEAR_TIME - WARNING_TIME);
+
+            // Timer biến mất - tự động xóa bao nếu không click
+            const disappearTimer = setTimeout(() => {
+                if (!isClicked && bao.parentElement) {
+                    bao.classList.add("bao-disappear");
+                    setTimeout(() => {
+                        if (bao.parentElement) {
+                            bao.remove();
+                        }
+                    }, 400);
+                }
+            }, DISAPPEAR_TIME);
+
             bao.addEventListener("click", function (event) {
-                if (!isPlaying) return;
+                if (!isPlaying || isClicked) return;
+                
+                isClicked = true;
+                clearTimeout(warningTimer);
+                clearTimeout(disappearTimer);
                 
                 const points = isGolden ? 3 : 1;
                 score += points;
