@@ -567,20 +567,57 @@
 
         .firework {
             position: fixed;
-            width: 6px;
-            height: 6px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             pointer-events: none;
-            z-index: 0;
+            z-index: 500;
         }
 
         .firework-dot {
             position: absolute;
-            width: 4px;
-            height: 4px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
             background: currentColor;
-            box-shadow: 0 0 6px currentColor;
+            box-shadow: 
+                0 0 10px currentColor,
+                0 0 20px currentColor,
+                0 0 30px currentColor;
+        }
+
+        .firework-trail {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0.6;
+            box-shadow: 0 0 8px currentColor;
+        }
+
+        .firework-sparkle {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 501;
+            box-shadow: 
+                0 0 4px white,
+                0 0 8px white;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { 
+                opacity: 0;
+                transform: scale(0);
+            }
+            50% { 
+                opacity: 1;
+                transform: scale(1.5);
+            }
         }
 
         .particle {
@@ -766,6 +803,94 @@
             letter-spacing: 0.1em;
             opacity: 0.8;
         }
+
+        .miss-indicator {
+            position: absolute;
+            font-size: 18px;
+            font-weight: 700;
+            color: #ff5c5c;
+            text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
+            pointer-events: none;
+            animation: missShake 0.5s ease-out forwards;
+            z-index: 100;
+        }
+
+        @keyframes missShake {
+            0% { 
+                transform: translateX(0) scale(1); 
+                opacity: 1; 
+            }
+            10% { transform: translateX(-10px) scale(1.2); }
+            20% { transform: translateX(10px) scale(1.2); }
+            30% { transform: translateX(-8px) scale(1.1); }
+            40% { transform: translateX(8px) scale(1.1); }
+            50% { transform: translateX(0) scale(1); }
+            100% { 
+                transform: translateY(-20px) scale(0.5); 
+                opacity: 0; 
+            }
+        }
+
+        .final-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 400;
+            opacity: 0;
+            pointer-events: none;
+            max-width: 90%;
+        }
+
+        .final-message.active {
+            animation: finalMessageAppear 0.8s ease-out forwards;
+        }
+
+        @keyframes finalMessageAppear {
+            0% { 
+                opacity: 0; 
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            100% { 
+                opacity: 1; 
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .final-message-year {
+            font-size: 72px;
+            font-weight: 900;
+            background: linear-gradient(45deg, #ffd700, #ff4500, #ffd700);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 40px rgba(255, 215, 0, 0.8);
+            margin-bottom: 12px;
+            animation: gradientShift 3s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .final-message-text {
+            font-size: 28px;
+            font-weight: 800;
+            color: #ffd700;
+            text-shadow: 
+                0 0 20px rgba(255, 215, 0, 1),
+                0 4px 8px rgba(0, 0, 0, 0.8);
+            margin-bottom: 8px;
+        }
+
+        .final-message-subtitle {
+            font-size: 18px;
+            color: #ffe6c9;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
     </style>
 </head>
 <body>
@@ -849,8 +974,9 @@
                             <li>Trong vòng <strong>30 giây</strong>, bao lì xì sẽ xuất hiện ngẫu nhiên.</li>
                             <li>Bấm vào mỗi bao để nhận <strong>+1 điểm</strong> (bao vàng <strong>+3 điểm</strong>).</li>
                             <li><strong>Chú ý:</strong> Bao lì xì sẽ tự biến mất sau <strong>4 giây</strong> nếu không bấm!</li>
+                            <li><strong>Cẩn thận:</strong> Bấm hụt vào vùng trống sẽ bị <strong>-1 điểm</strong> và mất combo!</li>
                             <li>Bấm liên tục để tạo <strong>Combo</strong> và nhận điểm thưởng.</li>
-                            <li>Kết thúc lượt, xem tổng điểm và lời chúc năm mới dành riêng cho bạn.</li>
+                            <li>Kết thúc lượt, xem tổng điểm và lời chúc năm mới 2026 Năm Bính Ngọ.</li>
                         </ul>
                     </div>
                 </section>
@@ -901,7 +1027,8 @@
     (function () {
         const DURATION = 30; // giây
         const MAX_BAO = 6;
-        const SPAWN_INTERVAL = 650; // ms
+        const SPAWN_INTERVAL_MIN = 400; // ms - thời gian tối thiểu
+        const SPAWN_INTERVAL_MAX = 900; // ms - thời gian tối đa
         const GOLDEN_CHANCE = 0.15; // 15% cơ hội bao vàng
         const COMBO_TIMEOUT = 2000; // 2 giây để duy trì combo
         const DISAPPEAR_TIME = 4000; // 4 giây trước khi bao biến mất
@@ -932,6 +1059,7 @@
         let comboTimer = null;
         let audioEnabled = true;
         let audioContext = null;
+        let spawnTimeoutId = null;
 
         // Khởi tạo Audio Context
         function initAudio() {
@@ -1030,6 +1158,38 @@
                     oscillator.stop(audioContext.currentTime + 0.5);
                 }, i * 100);
             }
+        }
+
+        // Tạo âm thanh bấm hụt
+        function playMissSound() {
+            if (!audioEnabled || !audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.2);
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.2);
+        }
+
+        // Hiển thị thông báo bấm hụt
+        function showMissIndicator(x, y) {
+            const miss = document.createElement("div");
+            miss.className = "miss-indicator";
+            miss.textContent = "-1";
+            miss.style.left = x + "px";
+            miss.style.top = y + "px";
+            
+            gameArea.appendChild(miss);
+            setTimeout(() => miss.remove(), 500);
         }
 
         // Tạo hiệu ứng hạt
@@ -1142,6 +1302,17 @@
             return Math.random() * (max - min) + min;
         }
 
+        // Lên lịch spawn bao lì xì tiếp theo với thời gian ngẫu nhiên
+        function scheduleNextBao() {
+            if (!isPlaying) return;
+            
+            const randomDelay = randomBetween(SPAWN_INTERVAL_MIN, SPAWN_INTERVAL_MAX);
+            spawnTimeoutId = setTimeout(() => {
+                createBaoLiXi();
+                scheduleNextBao(); // Tiếp tục lên lịch cho lần spawn tiếp theo
+            }, randomDelay);
+        }
+
         function createBaoLiXi() {
             if (!isPlaying) return;
             const currentBao = gameArea.querySelectorAll(".bao-li-xi").length;
@@ -1246,8 +1417,40 @@
         }
 
         function clearBao() {
-            gameArea.querySelectorAll(".bao-li-xi, .score-float, .particle").forEach(el => el.remove());
+            gameArea.querySelectorAll(".bao-li-xi, .score-float, .particle, .miss-indicator").forEach(el => el.remove());
             resetCombo();
+        }
+
+        // Xử lý click vào vùng trống (bấm hụt)
+        function handleMissClick(event) {
+            if (!isPlaying) return;
+            
+            // Chỉ xử lý nếu click vào gameArea chứ không phải các phần tử con
+            if (event.target !== gameArea && !event.target.classList.contains("game-area-inner")) {
+                return;
+            }
+            
+            // Trừ điểm (không cho điểm âm)
+            if (score > 0) {
+                score -= 1;
+                scoreValue.textContent = String(score);
+            }
+            
+            // Reset combo khi bấm hụt
+            resetCombo();
+            
+            // Phát âm thanh
+            playMissSound();
+            
+            // Hiệu ứng rung
+            gameArea.classList.add("shake");
+            setTimeout(() => gameArea.classList.remove("shake"), 300);
+            
+            // Hiển thị thông báo
+            const rect = gameArea.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            showMissIndicator(x, y);
         }
 
         async function startGame() {
@@ -1283,6 +1486,9 @@
             timeValue.textContent = String(DURATION);
             startBtn.textContent = "Đang chơi...";
 
+            // Thêm event listener cho việc bấm hụt
+            gameArea.addEventListener("click", handleMissClick);
+
             timerId = setInterval(() => {
                 timeLeft -= 1;
                 timeValue.textContent = String(timeLeft);
@@ -1299,7 +1505,7 @@
             }, 1000);
 
             createBaoLiXi();
-            spawnId = setInterval(createBaoLiXi, SPAWN_INTERVAL);
+            scheduleNextBao(); // Bắt đầu chu kỳ spawn với thời gian ngẫu nhiên
         }
 
         function stopTimers() {
@@ -1311,6 +1517,10 @@
                 clearInterval(spawnId);
                 spawnId = null;
             }
+            if (spawnTimeoutId) {
+                clearTimeout(spawnTimeoutId);
+                spawnTimeoutId = null;
+            }
         }
 
         function endGame() {
@@ -1318,6 +1528,9 @@
             isPlaying = false;
             stopTimers();
             clearBao();
+
+            // Xóa event listener bấm hụt
+            gameArea.removeEventListener("click", handleMissClick);
 
             // Phát âm thanh kết thúc
             playEndSound();
@@ -1336,9 +1549,36 @@
             resultSub.textContent = message.body;
             resultBanner.style.display = "flex";
 
+            // Hiển thị màn hình chúc mừng năm mới
+            showNewYearMessage();
+
             // Pháo hoa nhiều hơn nếu đạt điểm cao
-            const fireworkCount = score > 20 ? 16 : score > 12 ? 12 : 8;
+            const fireworkCount = score > 20 ? 24 : score > 12 ? 18 : 12;
             spawnFireworks(fireworkCount);
+        }
+
+        // Hiển thị màn hình chúc mừng năm mới
+        function showNewYearMessage() {
+            const messageDiv = document.createElement("div");
+            messageDiv.className = "final-message";
+            messageDiv.innerHTML = `
+                <div class="final-message-year">2026</div>
+                <div class="final-message-text">CHÚC MỪNG NĂM MỚI</div>
+                <div class="final-message-subtitle">Năm Bính Ngọ - Vạn Sự Như Ý</div>
+            `;
+            
+            document.body.appendChild(messageDiv);
+            
+            // Hiển thị với animation
+            setTimeout(() => {
+                messageDiv.classList.add("active");
+            }, 500);
+            
+            // Tự động ẩn sau 5 giây
+            setTimeout(() => {
+                messageDiv.style.animation = "finalMessageAppear 0.5s ease-out reverse forwards";
+                setTimeout(() => messageDiv.remove(), 500);
+            }, 5000);
         }
 
         function getMessageForScore(score, best) {
@@ -1373,47 +1613,248 @@
         }
 
         function spawnFireworks(count = 8) {
-            const colors = ["#ffcf00", "#ff5c5c", "#00ffb3", "#7b5cff", "#ff9a3c"];
+            const colors = [
+                "#ffcf00", "#ff5c5c", "#00ffb3", "#7b5cff", "#ff9a3c",
+                "#ff1493", "#00bfff", "#ffd700", "#ff69b4", "#7fff00",
+                "#ff6347", "#4169e1", "#ffaa00", "#00fa9a"
+            ];
+            
             for (let i = 0; i < count; i++) {
                 setTimeout(() => {
-                    const x = randomBetween(10, 90);
-                    const y = randomBetween(10, 45);
-                    const color = colors[i % colors.length];
-                    createFirework(x, y, color);
-                }, i * 150);
+                    const x = randomBetween(15, 85);
+                    const y = randomBetween(10, 50);
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    const secondaryColor = colors[Math.floor(Math.random() * colors.length)];
+                    
+                    // Random loại pháo hoa
+                    const type = Math.random();
+                    if (type < 0.4) {
+                        createBurstFirework(x, y, color, secondaryColor);
+                    } else if (type < 0.7) {
+                        createTrailFirework(x, y, color);
+                    } else {
+                        createMultiLayerFirework(x, y, color, secondaryColor);
+                    }
+                    
+                    // Thêm sparkles ngẫu nhiên
+                    if (Math.random() > 0.5) {
+                        createSparkles(x, y);
+                    }
+                }, i * randomBetween(100, 250));
             }
         }
 
-        function createFirework(xPercent, yPercent, color) {
+        // Pháo hoa nổ bùng (burst) - hoành tráng nhất
+        function createBurstFirework(xPercent, yPercent, primaryColor, secondaryColor) {
             const fw = document.createElement("div");
             fw.className = "firework";
             fw.style.left = xPercent + "vw";
             fw.style.top = yPercent + "vh";
-            fw.style.color = color;
+            fw.style.color = primaryColor;
 
-            const particles = 16;
-            const radius = 40;
-            for (let i = 0; i < particles; i++) {
+            // Lớp 1: Vòng ngoài lớn
+            const outerParticles = 24;
+            const outerRadius = randomBetween(60, 80);
+            for (let i = 0; i < outerParticles; i++) {
                 const dot = document.createElement("div");
                 dot.className = "firework-dot";
-                const angle = (Math.PI * 2 * i) / particles;
-                const dx = Math.cos(angle) * radius;
-                const dy = Math.sin(angle) * radius;
+                const angle = (Math.PI * 2 * i) / outerParticles;
+                const dx = Math.cos(angle) * outerRadius;
+                const dy = Math.sin(angle) * outerRadius;
+                
+                dot.style.background = primaryColor;
+                dot.style.color = primaryColor;
 
-                dot.style.transform = "translate(0, 0)";
                 dot.animate([
-                    { transform: "translate(0, 0)", opacity: 1 },
-                    { transform: "translate(" + dx + "px," + dy + "px)", opacity: 0 }
+                    { 
+                        transform: "translate(0, 0) scale(1)", 
+                        opacity: 1 
+                    },
+                    { 
+                        transform: `translate(${dx}px, ${dy}px) scale(0.3)`, 
+                        opacity: 0 
+                    }
                 ], {
-                    duration: 900,
-                    easing: "cubic-bezier(0.2,0.6,0.3,1)"
+                    duration: randomBetween(1000, 1400),
+                    easing: "cubic-bezier(0.2, 0.8, 0.3, 1)"
+                });
+
+                fw.appendChild(dot);
+            }
+
+            // Lớp 2: Vòng trong nhỏ hơn với màu khác
+            const innerParticles = 16;
+            const innerRadius = randomBetween(30, 45);
+            for (let i = 0; i < innerParticles; i++) {
+                const dot = document.createElement("div");
+                dot.className = "firework-dot";
+                const angle = (Math.PI * 2 * i) / innerParticles + 0.2;
+                const dx = Math.cos(angle) * innerRadius;
+                const dy = Math.sin(angle) * innerRadius;
+                
+                dot.style.background = secondaryColor;
+                dot.style.color = secondaryColor;
+
+                dot.animate([
+                    { 
+                        transform: "translate(0, 0) scale(1.2)", 
+                        opacity: 1 
+                    },
+                    { 
+                        transform: `translate(${dx}px, ${dy}px) scale(0.5)`, 
+                        opacity: 0 
+                    }
+                ], {
+                    duration: randomBetween(900, 1200),
+                    easing: "cubic-bezier(0.15, 0.85, 0.35, 1)",
+                    delay: 50
                 });
 
                 fw.appendChild(dot);
             }
 
             document.body.appendChild(fw);
-            setTimeout(() => fw.remove(), 1000);
+            setTimeout(() => fw.remove(), 1500);
+        }
+
+        // Pháo hoa có đuôi (trail)
+        function createTrailFirework(xPercent, yPercent, color) {
+            const fw = document.createElement("div");
+            fw.className = "firework";
+            fw.style.left = xPercent + "vw";
+            fw.style.top = yPercent + "vh";
+            fw.style.color = color;
+
+            const particles = 20;
+            const radius = randomBetween(50, 70);
+            
+            for (let i = 0; i < particles; i++) {
+                const angle = (Math.PI * 2 * i) / particles;
+                const dx = Math.cos(angle) * radius;
+                const dy = Math.sin(angle) * radius;
+                
+                // Dot chính
+                const dot = document.createElement("div");
+                dot.className = "firework-dot";
+                dot.style.background = color;
+                dot.style.color = color;
+
+                dot.animate([
+                    { transform: "translate(0, 0)", opacity: 1 },
+                    { transform: `translate(${dx}px, ${dy}px)`, opacity: 0 }
+                ], {
+                    duration: randomBetween(1000, 1300),
+                    easing: "cubic-bezier(0.25, 0.8, 0.25, 1)"
+                });
+
+                fw.appendChild(dot);
+                
+                // Thêm trails (đuôi)
+                for (let j = 1; j <= 3; j++) {
+                    const trail = document.createElement("div");
+                    trail.className = "firework-trail";
+                    trail.style.background = color;
+                    trail.style.color = color;
+                    
+                    const trailDist = (dx * j) / 4;
+                    const trailDistY = (dy * j) / 4;
+                    
+                    trail.animate([
+                        { 
+                            transform: `translate(0, 0)`, 
+                            opacity: 0 
+                        },
+                        { 
+                            transform: `translate(${trailDist}px, ${trailDistY}px)`, 
+                            opacity: 0.8 
+                        },
+                        { 
+                            transform: `translate(${dx}px, ${dy}px)`, 
+                            opacity: 0 
+                        }
+                    ], {
+                        duration: randomBetween(1000, 1300),
+                        easing: "cubic-bezier(0.25, 0.8, 0.25, 1)",
+                        delay: j * 30
+                    });
+                    
+                    fw.appendChild(trail);
+                }
+            }
+
+            document.body.appendChild(fw);
+            setTimeout(() => fw.remove(), 1400);
+        }
+
+        // Pháo hoa nhiều lớp (multi-layer)
+        function createMultiLayerFirework(xPercent, yPercent, color1, color2) {
+            // Tạo 3 lớp pháo hoa nổ liên tiếp
+            setTimeout(() => createSimpleFirework(xPercent, yPercent, color1, 45, 18), 0);
+            setTimeout(() => createSimpleFirework(xPercent, yPercent, color2, 30, 12), 200);
+            setTimeout(() => createSimpleFirework(xPercent, yPercent, "#ffffff", 20, 8), 350);
+        }
+
+        // Pháo hoa đơn giản (dùng cho multi-layer)
+        function createSimpleFirework(xPercent, yPercent, color, radius, particleCount) {
+            const fw = document.createElement("div");
+            fw.className = "firework";
+            fw.style.left = xPercent + "vw";
+            fw.style.top = yPercent + "vh";
+            fw.style.color = color;
+
+            for (let i = 0; i < particleCount; i++) {
+                const dot = document.createElement("div");
+                dot.className = "firework-dot";
+                const angle = (Math.PI * 2 * i) / particleCount;
+                const dx = Math.cos(angle) * radius;
+                const dy = Math.sin(angle) * radius;
+                
+                dot.style.background = color;
+                dot.style.color = color;
+
+                dot.animate([
+                    { transform: "translate(0, 0) scale(1)", opacity: 1 },
+                    { transform: `translate(${dx}px, ${dy}px) scale(0.2)`, opacity: 0 }
+                ], {
+                    duration: 800,
+                    easing: "cubic-bezier(0.2, 0.8, 0.3, 1)"
+                });
+
+                fw.appendChild(dot);
+            }
+
+            document.body.appendChild(fw);
+            setTimeout(() => fw.remove(), 900);
+        }
+
+        // Tạo hiệu ứng lấp lánh (sparkles)
+        function createSparkles(xPercent, yPercent) {
+            const sparkleCount = randomBetween(8, 15);
+            
+            for (let i = 0; i < sparkleCount; i++) {
+                setTimeout(() => {
+                    const sparkle = document.createElement("div");
+                    sparkle.className = "firework-sparkle";
+                    
+                    const offsetX = randomBetween(-50, 50);
+                    const offsetY = randomBetween(-50, 50);
+                    
+                    sparkle.style.left = `calc(${xPercent}vw + ${offsetX}px)`;
+                    sparkle.style.top = `calc(${yPercent}vh + ${offsetY}px)`;
+                    
+                    sparkle.animate([
+                        { opacity: 0, transform: "scale(0) rotate(0deg)" },
+                        { opacity: 1, transform: "scale(1.5) rotate(180deg)" },
+                        { opacity: 0, transform: "scale(0) rotate(360deg)" }
+                    ], {
+                        duration: randomBetween(600, 1000),
+                        easing: "ease-in-out"
+                    });
+                    
+                    document.body.appendChild(sparkle);
+                    setTimeout(() => sparkle.remove(), 1000);
+                }, i * 50);
+            }
         }
 
         startBtn.addEventListener("click", startGame);
